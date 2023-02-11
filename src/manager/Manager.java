@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Manager {
-    int id;
+    private static int id;
     private HashMap<Integer, Epic> epicTasksMap = new HashMap<>();
     private HashMap<Integer, Task> tasksMap = new HashMap<>();
     private HashMap<Integer, Subtask> subtasksMap = new HashMap<>();
@@ -37,29 +37,76 @@ public class Manager {
         return SubtaskList;
     }
 
-    public Task getByIdTask(int idTask) {
-        return tasksMap.get(idTask);
+    public Task getByIdTask(int id) {
+        return tasksMap.get(id);
     }
 
-    public Object getByIdEpic(int idTask) {
-        return epicTasksMap.get(idTask);
+    public Object getByIdEpic(int id) {
+        return epicTasksMap.get(id);
     }
 
-    public Object getByIdSubtask(int idTask) {
-        return subtasksMap.get(idTask);
+    public Object getByIdSubtask(int id) {
+        return subtasksMap.get(id);
     }
 
-    public int getIdTask() {
+    public static int getIdTask() {
         return id++;
     }
 
-    public ArrayList<Subtask> getAllEpicSubs(int idEpic){
+    public ArrayList<Subtask> getAllEpicSubtasks(int idEpic) {
         ArrayList<Subtask> subtasks = new ArrayList<>();
         for (Integer idSub : epicTasksMap.get(idEpic).getIdOfSubtasksList()) {
             subtasks.add(subtasksMap.get(idSub));
         }
         return subtasks;
     }
+
+    public void deleteById(int id){
+        for (Object o : allTaskList) {
+            if (o.getClass().getSimpleName().equals("Epic")) {
+                Epic epic = (Epic) o;
+                if (id == epic.getId()){
+                    for (Integer idSub : epic.getIdOfSubtasksList()) {
+                        allTaskList.remove(subtasksMap.get(idSub));
+                        subtasksMap.remove(idSub);
+                    }
+                    epicTasksMap.remove(id);
+                    allTaskList.remove(epic);
+                    return;
+                }
+            } else if (o.getClass().getSimpleName().equals("Task")) {
+                Task task = (Task) o;
+                if (id == task.getId()){
+                    tasksMap.remove(id);
+                    allTaskList.remove(task);
+                    return;
+                }
+            } else {
+                Subtask subtask = (Subtask) o;
+                if (id == subtask.getId()){
+                    subtasksMap.remove(id);
+                    ArrayList<Integer> arrayList = epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList();
+                    for (int i = 0; i < arrayList.size(); i++) {
+                        if (arrayList.get(i) == subtask.getId()){
+                            arrayList.remove(i);
+                        }
+                    }
+                    epicTasksMap.get(subtask.getIdOfEpic()).setIdOfSubtasksList(arrayList);
+
+                    allTaskList.remove(subtask);
+                    if (epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList().isEmpty()){
+                        epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Task.Status.NEW);
+                    } else if (epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList().size() >= 1){
+                        updateSubtask(subtasksMap.get(epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList().get(0)),
+                                subtasksMap.get(epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList().get(0)).getStatus()); // страшная наверное штука?) удаление с помощью обновления решил сделать, можно
+                    }                                                                                                               // было наверное для читабельности рабзить на переменные, а то массивно слишком
+                    return;                                                                                                             // получается))) или же все таки стоило реализовать метод?) но тогда по факту
+                                                                                                                                    // дублирование было бы кода... И времени малооо
+                }
+            }
+        }
+    }
+
     public void deleteAllTasks(ArrayList<Task> taskList) {
         for (Task task : taskList) {
             allTaskList.remove(task);
@@ -67,7 +114,7 @@ public class Manager {
         }
     }
 
-    public void deleteAllEpics(ArrayList<Epic> epicList){
+    public void deleteAllEpics(ArrayList<Epic> epicList) {
         for (Epic epic : epicList) {
             for (Integer idSub : epic.getIdOfSubtasksList()) {
                 allTaskList.remove(subtasksMap.get(idSub));
@@ -79,7 +126,7 @@ public class Manager {
         }
     }
 
-    public void deleteAllSubtask(ArrayList<Subtask> subtaskList){
+    public void deleteAllSubtask(ArrayList<Subtask> subtaskList) {
         if (subtaskList != null) {
             for (Subtask subtask : subtaskList) {
                 ArrayList<Integer> epicList = epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList();
@@ -96,7 +143,7 @@ public class Manager {
         }
     }
 
-    public void updateTask(Task task, Task.Status status){
+    public void updateTask(Task task, Task.Status status) {
         allTaskList.remove(tasksMap.get(task.getId()));
         task.setStatus(status);
         setTask(task);
@@ -115,15 +162,15 @@ public class Manager {
         }
     }
 
-    public void updateSubtask(Subtask subtask, Task.Status status){
+    public void updateSubtask(Subtask subtask, Task.Status status) {
 
         allTaskList.remove(subtasksMap.get(subtask.getId()));
         subtask.setStatus(status);
         allTaskList.add(subtask);
         subtasksMap.put(subtask.getId(), subtask);
-        if (status == Task.Status.NEW || status == Task.Status.DONE){
+        if (status == Task.Status.NEW || status == Task.Status.DONE) {
             for (Integer idSub : epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList()) {
-                if (subtask.getStatus() != subtasksMap.get(idSub).getStatus()){
+                if (subtask.getStatus() != subtasksMap.get(idSub).getStatus()) {
                     epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Task.Status.IN_PROGRESS);
                     return;
                 }
@@ -139,7 +186,8 @@ public class Manager {
                 }
             }
             epicTasksMap.get(subtask.getIdOfEpic()).setStatus(status);
-        }*/ else if (status == Task.Status.IN_PROGRESS){
+        }*/
+        else if (status == Task.Status.IN_PROGRESS) {
             epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Task.Status.IN_PROGRESS);
         }
     }
@@ -151,7 +199,6 @@ public class Manager {
         epic.setStatus(status);
         setTask(epic);
     }
-
 
     public void setTask(Object task) {
         allTaskList.add(task);
@@ -169,6 +216,7 @@ public class Manager {
                 ArrayList<Integer> idSubInEpicList = epicTasksMap.get(newSubtask.getIdOfEpic()).getIdOfSubtasksList();
                 idSubInEpicList.add(newSubtask.getId());
                 subtasksMap.put(newSubtask.getId(), newSubtask);
+                updateSubtask(newSubtask, newSubtask.getStatus());
                 break;
         }
     }
