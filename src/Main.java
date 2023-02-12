@@ -59,6 +59,8 @@ public class Main {
         manager.updateSubtask(subtask1, Task.Status.NEW);
 
         //удаление по айди
-        manager.deleteById(4);
+        manager.deleteEpic(2);
+        manager.deleteSubtask(7);
+        manager.deleteTask(1);
     }
 }
