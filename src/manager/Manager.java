@@ -61,7 +61,37 @@ public class Manager {
         return subtasks;
     }
 
-    public void deleteById(int id){
+
+    public void deleteTask(int id) {
+        allTaskList.remove(tasksMap.get(id));
+        tasksMap.remove(id);
+    }
+
+    public void deleteEpic(int id) {
+        for (Integer idSubtask : epicTasksMap.get(id).getIdOfSubtasksList()) {
+            allTaskList.remove(subtasksMap.remove(idSubtask));
+        }
+        allTaskList.remove(epicTasksMap.get(id));
+        epicTasksMap.remove(id);
+    }
+
+    public void deleteSubtask(int id) {
+        allTaskList.remove(subtasksMap.get(id));
+        final Subtask subtask = subtasksMap.remove(id);
+        ArrayList<Integer> arrayList = epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList();
+        for (int i = 0; i < arrayList.size(); i++) {
+            if (arrayList.get(i) == subtask.getId()){
+                arrayList.remove(i);
+            }
+        }
+        epicTasksMap.get(subtask.getIdOfEpic()).setIdOfSubtasksList(arrayList);
+        updateEpic(epicTasksMap.get(subtask.getIdOfEpic()),
+                epicTasksMap.get(subtask.getIdOfEpic()).getStatus());
+
+    }
+
+    //оставлю для себя удаление с помощью одного метода
+    /*public void deleteById(int id) {
         for (Object o : allTaskList) {
             if (o.getClass().getSimpleName().equals("Epic")) {
                 Epic epic = (Epic) o;
@@ -105,7 +135,7 @@ public class Manager {
                 }
             }
         }
-    }
+    }*/
 
     public void deleteAllTasks(ArrayList<Task> taskList) {
         for (Task task : taskList) {
@@ -150,15 +180,19 @@ public class Manager {
     }
 
     public void updateEpic(Epic epic, Task.Status status) {
-        if (status == Task.Status.NEW || status == Task.Status.DONE) {
-            for (Integer idSub : epicTasksMap.get(epic.getId()).getIdOfSubtasksList()) {
-                if (subtasksMap.get(idSub).getStatus() != status) {
-                    subtasksMap.get(idSub).setStatus(status);
+        if (epic.getIdOfSubtasksList().isEmpty()) {
+            epic.setStatus(Task.Status.NEW);
+        } else {
+            if (status == Task.Status.NEW || status == Task.Status.DONE) {
+                for (Integer idSub : epicTasksMap.get(epic.getId()).getIdOfSubtasksList()) {
+                    if (subtasksMap.get(idSub).getStatus() != status) {
+                        subtasksMap.get(idSub).setStatus(status);
+                    }
                 }
+                removeSubtask(epic, status);
+            } else if (status == Task.Status.IN_PROGRESS) {
+                removeSubtask(epic, status);
             }
-            removeSubtask(epic, status);
-        } else if (status == Task.Status.IN_PROGRESS) {
-            removeSubtask(epic, status);
         }
     }
 
