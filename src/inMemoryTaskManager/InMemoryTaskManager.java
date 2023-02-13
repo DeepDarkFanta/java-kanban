@@ -1,18 +1,30 @@
-package manager;
+package inMemoryTaskManager;
 
+import enums.Status;
+import Interfaces.HistoryManager;
+import Interfaces.TaskManager;
 import task.*;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+public class InMemoryTaskManager implements TaskManager {
 
-public class Manager {
     private static int id;
-    private HashMap<Integer, Epic> epicTasksMap = new HashMap<>();
-    private HashMap<Integer, Task> tasksMap = new HashMap<>();
-    private HashMap<Integer, Subtask> subtasksMap = new HashMap<>();
-    ArrayList<Object> allTaskList = new ArrayList<>();
+    private final HashMap<Integer, Epic> epicTasksMap;
+    private final HashMap<Integer, Task> tasksMap;
+    private final HashMap<Integer, Subtask> subtasksMap;
+    private final ArrayList<Object> allTaskList;
+    private final HistoryManager inMemoryHistoryManager;
 
+    public InMemoryTaskManager() {
+        epicTasksMap = new HashMap<>();
+        tasksMap = new HashMap<>();
+        subtasksMap = new HashMap<>();
+        allTaskList = new ArrayList<>();
+        inMemoryHistoryManager = Managers.getDefaultHistory();
+
+    }
+
+    @Override
     public ArrayList<Epic> getEpicTasksList() {
         ArrayList<Epic> epicList = new ArrayList<>();
         for (Map.Entry<Integer, Epic> integerEpicEntry : epicTasksMap.entrySet()) {
@@ -21,6 +33,7 @@ public class Manager {
         return epicList;
     }
 
+    @Override
     public ArrayList<Task> getTasksList() {
         ArrayList<Task> taskList = new ArrayList<>();
         for (Map.Entry<Integer, Task> integerEpicEntry : tasksMap.entrySet()) {
@@ -29,6 +42,7 @@ public class Manager {
         return taskList;
     }
 
+    @Override
     public ArrayList<Subtask> getSubtasksList() {
         ArrayList<Subtask> SubtaskList = new ArrayList<>();
         for (Map.Entry<Integer, Subtask> integerEpicEntry : subtasksMap.entrySet()) {
@@ -37,15 +51,21 @@ public class Manager {
         return SubtaskList;
     }
 
+    @Override
     public Task getByIdTask(int id) {
+        inMemoryHistoryManager.add(tasksMap.get(id));
         return tasksMap.get(id);
     }
 
+    @Override
     public Object getByIdEpic(int id) {
+        inMemoryHistoryManager.add(epicTasksMap.get(id));
         return epicTasksMap.get(id);
     }
 
+    @Override
     public Object getByIdSubtask(int id) {
+        inMemoryHistoryManager.add(subtasksMap.get(id));
         return subtasksMap.get(id);
     }
 
@@ -53,6 +73,7 @@ public class Manager {
         return id++;
     }
 
+    @Override
     public ArrayList<Subtask> getAllEpicSubtasks(int idEpic) {
         ArrayList<Subtask> subtasks = new ArrayList<>();
         for (Integer idSub : epicTasksMap.get(idEpic).getIdOfSubtasksList()) {
@@ -62,11 +83,13 @@ public class Manager {
     }
 
 
+    @Override
     public void deleteTask(int id) {
         allTaskList.remove(tasksMap.get(id));
         tasksMap.remove(id);
     }
 
+    @Override
     public void deleteEpic(int id) {
         for (Integer idSubtask : epicTasksMap.get(id).getIdOfSubtasksList()) {
             allTaskList.remove(subtasksMap.remove(idSubtask));
@@ -75,6 +98,7 @@ public class Manager {
         epicTasksMap.remove(id);
     }
 
+    @Override
     public void deleteSubtask(int id) {
         allTaskList.remove(subtasksMap.get(id));
         final Subtask subtask = subtasksMap.remove(id);
@@ -128,15 +152,15 @@ public class Manager {
                         epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Task.Status.NEW);
                     } else if (epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList().size() >= 1){
                         updateSubtask(subtasksMap.get(epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList().get(0)),
-                                subtasksMap.get(epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList().get(0)).getStatus()); // страшная наверное штука?) удаление с помощью обновления решил сделать, можно
-                    }                                                                                                               // было наверное для читабельности рабзить на переменные, а то массивно слишком
-                    return;                                                                                                             // получается))) или же все таки стоило реализовать метод?) но тогда по факту
-                                                                                                                                    // дублирование было бы кода... И времени малооо
+                                subtasksMap.get(epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList().get(0)).getStatus());
+                                }
+                                return;
                 }
             }
         }
     }*/
 
+    @Override
     public void deleteAllTasks(ArrayList<Task> taskList) {
         for (Task task : taskList) {
             allTaskList.remove(task);
@@ -144,6 +168,7 @@ public class Manager {
         }
     }
 
+    @Override
     public void deleteAllEpics(ArrayList<Epic> epicList) {
         for (Epic epic : epicList) {
             for (Integer idSub : epic.getIdOfSubtasksList()) {
@@ -156,7 +181,8 @@ public class Manager {
         }
     }
 
-    public void deleteAllSubtask(ArrayList<Subtask> subtaskList) {
+    @Override
+    public void deleteAllSubtasks(ArrayList<Subtask> subtaskList) {
         if (subtaskList != null) {
             for (Subtask subtask : subtaskList) {
                 ArrayList<Integer> epicList = epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList();
@@ -168,72 +194,65 @@ public class Manager {
                 }
                 allTaskList.remove(subtask);
                 subtasksMap.remove(subtask.getId());
-                epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Task.Status.NEW);
+                epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Status.NEW);
             }
         }
     }
 
-    public void updateTask(Task task, Task.Status status) {
+    @Override
+    public void updateTask(Task task, Status status) {
         allTaskList.remove(tasksMap.get(task.getId()));
         task.setStatus(status);
         setTask(task);
     }
 
-    public void updateEpic(Epic epic, Task.Status status) {
+    @Override
+    public void updateEpic(Epic epic, Status status) {
         if (epic.getIdOfSubtasksList().isEmpty()) {
-            epic.setStatus(Task.Status.NEW);
+            epic.setStatus(Status.NEW);
         } else {
-            if (status == Task.Status.NEW || status == Task.Status.DONE) {
+            if (status == Status.NEW || status == Status.DONE) {
                 for (Integer idSub : epicTasksMap.get(epic.getId()).getIdOfSubtasksList()) {
                     if (subtasksMap.get(idSub).getStatus() != status) {
                         subtasksMap.get(idSub).setStatus(status);
                     }
                 }
                 removeSubtask(epic, status);
-            } else if (status == Task.Status.IN_PROGRESS) {
+            } else if (status == Status.IN_PROGRESS) {
                 removeSubtask(epic, status);
             }
         }
     }
 
-    public void updateSubtask(Subtask subtask, Task.Status status) {
-
+    @Override
+    public void updateSubtask(Subtask subtask, Status status) {
         allTaskList.remove(subtasksMap.get(subtask.getId()));
         subtask.setStatus(status);
         allTaskList.add(subtask);
         subtasksMap.put(subtask.getId(), subtask);
-        if (status == Task.Status.NEW || status == Task.Status.DONE) {
+        if (status == Status.NEW || status == Status.DONE) {
             for (Integer idSub : epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList()) {
                 if (subtask.getStatus() != subtasksMap.get(idSub).getStatus()) {
-                    epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Task.Status.IN_PROGRESS);
+                    epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Status.IN_PROGRESS);
                     return;
                 }
 
             }
             epicTasksMap.get(subtask.getIdOfEpic()).setStatus(status);
         }
-        /*else if (status == Task.Status.DONE){
-            for (Integer idSub : epicTasksMap.get(subtask.getIdOfEpic()).getIdOfSubtasksList()){
-                if (subtask.getStatus() != subtasksMap.get(idSub).getStatus()){
-                    epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Task.Status.IN_PROGRESS);
-                    return;
-                }
-            }
-            epicTasksMap.get(subtask.getIdOfEpic()).setStatus(status);
-        }*/
-        else if (status == Task.Status.IN_PROGRESS) {
-            epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Task.Status.IN_PROGRESS);
+        else if (status == Status.IN_PROGRESS) {
+            epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Status.IN_PROGRESS);
         }
     }
 
-
-    private void removeSubtask(Epic epic, Task.Status status) {
+    private void removeSubtask(Epic epic, Status status) {
         epic.setIdOfSubtasksList(epicTasksMap.get(epic.getId()).getIdOfSubtasksList());
         allTaskList.remove(epic);
         epic.setStatus(status);
         setTask(epic);
     }
 
+    @Override
     public void setTask(Object task) {
         allTaskList.add(task);
         switch (task.getClass().getSimpleName()) {
@@ -255,12 +274,15 @@ public class Manager {
         }
     }
 
+    @Override
+    public List<Task> getHistory(){
+        return inMemoryHistoryManager.getHistory();
+    }
     public void showList() {
         for (Object o : allTaskList) {
             System.out.println("ArrayListAllTask = " + o);
         }
     }
-
 
     public void showMap() {
         System.out.println("tasks:");

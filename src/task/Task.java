@@ -1,6 +1,7 @@
 package task;
 
-import manager.Manager;
+import enums.Status;
+import inMemoryTaskManager.InMemoryTaskManager;
 import java.util.Objects;
 
 public class Task {
@@ -9,18 +10,20 @@ public class Task {
     private int id;
     private Status status;
 
+/*
     public enum Status {
         NEW,
         IN_PROGRESS,
         DONE
     }
+*/
 
     public Task(String title, String description) {
         this.title = title;
         this.description = description;
         status = Status.NEW;
 
-        this.id = Manager.getIdTask();
+        this.id = InMemoryTaskManager.getIdTask();
     }
 
     public String getTitle() {
