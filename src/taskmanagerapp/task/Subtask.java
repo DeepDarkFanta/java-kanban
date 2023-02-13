@@ -1,4 +1,4 @@
-package task;
+package taskmanagerapp.task;
 
 public class Subtask extends Task{
     private int idOfEpic;

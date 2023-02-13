@@ -1,7 +1,7 @@
-package inMemoryTaskManager;
+package taskmanagerapp.manager;
 
-import Interfaces.HistoryManager;
-import Interfaces.TaskManager;
+import taskmanagerapp.interfaces.HistoryManager;
+import taskmanagerapp.interfaces.TaskManager;
 
 public class Managers {
     public static TaskManager getDefault() {

@@ -1,9 +1,8 @@
-import Interfaces.TaskManager;
-import enums.Status;
-import inMemoryTaskManager.Managers;
-import task.Epic;
-import task.Subtask;
-import task.Task;
+import taskmanagerapp.interfaces.TaskManager;
+import taskmanagerapp.manager.Managers;
+import taskmanagerapp.task.Epic;
+import taskmanagerapp.task.Subtask;
+import taskmanagerapp.task.Task;
 
 
 public class Main {

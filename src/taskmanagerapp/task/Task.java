@@ -1,7 +1,7 @@
-package task;
+package taskmanagerapp.task;
 
-import enums.Status;
-import inMemoryTaskManager.InMemoryTaskManager;
+import taskmanagerapp.enums.Status;
+import taskmanagerapp.manager.InMemoryTaskManager;
 import java.util.Objects;
 
 public class Task {

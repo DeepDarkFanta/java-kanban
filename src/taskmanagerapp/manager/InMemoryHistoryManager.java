@@ -1,7 +1,7 @@
-package inMemoryTaskManager;
+package taskmanagerapp.manager;
 
-import Interfaces.HistoryManager;
-import task.Task;
+import taskmanagerapp.interfaces.HistoryManager;
+import taskmanagerapp.task.Task;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;

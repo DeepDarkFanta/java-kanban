@@ -1,9 +1,9 @@
-package inMemoryTaskManager;
+package taskmanagerapp.manager;
 
-import enums.Status;
-import Interfaces.HistoryManager;
-import Interfaces.TaskManager;
-import task.*;
+import taskmanagerapp.enums.Status;
+import taskmanagerapp.interfaces.HistoryManager;
+import taskmanagerapp.interfaces.TaskManager;
+import taskmanagerapp.task.*;
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
@@ -129,10 +129,10 @@ public class InMemoryTaskManager implements TaskManager {
                     return;
                 }
             } else if (o.getClass().getSimpleName().equals("Task")) {
-                Task task = (Task) o;
-                if (id == task.getId()){
+                Task taskmanagerapp.task = (Task) o;
+                if (id == taskmanagerapp.task.getId()){
                     tasksMap.remove(id);
-                    allTaskList.remove(task);
+                    allTaskList.remove(taskmanagerapp.task);
                     return;
                 }
             } else {

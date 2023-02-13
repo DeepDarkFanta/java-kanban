@@ -1,9 +1,9 @@
-package Interfaces;
+package taskmanagerapp.interfaces;
 
-import enums.Status;
-import task.Epic;
-import task.Subtask;
-import task.Task;
+import taskmanagerapp.enums.Status;
+import taskmanagerapp.task.Epic;
+import taskmanagerapp.task.Subtask;
+import taskmanagerapp.task.Task;
 import java.util.ArrayList;
 import java.util.List;
 

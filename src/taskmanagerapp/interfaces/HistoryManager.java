@@ -1,5 +1,5 @@
-package Interfaces;
-import task.Task;
+package taskmanagerapp.interfaces;
+import taskmanagerapp.task.Task;
 
 import java.util.List;
 

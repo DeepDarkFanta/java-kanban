@@ -1,4 +1,4 @@
-package enums;
+package taskmanagerapp.enums;
 
 public enum Status {
     NEW,
