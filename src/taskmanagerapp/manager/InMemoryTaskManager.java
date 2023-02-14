@@ -1,7 +1,7 @@
 package taskmanagerapp.manager;
 
 import taskmanagerapp.enums.Status;
-import taskmanagerapp.task.*;
+import taskmanagerapp.tasks.*;
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {

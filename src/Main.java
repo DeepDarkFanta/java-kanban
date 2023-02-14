@@ -1,8 +1,8 @@
 import taskmanagerapp.manager.TaskManager;
 import taskmanagerapp.manager.Managers;
-import taskmanagerapp.task.Epic;
-import taskmanagerapp.task.Subtask;
-import taskmanagerapp.task.Task;
+import taskmanagerapp.tasks.Epic;
+import taskmanagerapp.tasks.Subtask;
+import taskmanagerapp.tasks.Task;
 
 
 public class Main {

@@ -1,5 +1,5 @@
 package taskmanagerapp.manager;
-import taskmanagerapp.task.Task;
+import taskmanagerapp.tasks.Task;
 
 import java.util.List;
 
