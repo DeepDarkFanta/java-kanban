@@ -1,4 +1,4 @@
-package taskmanagerapp.interfaces;
+package taskmanagerapp.manager;
 
 import taskmanagerapp.enums.Status;
 import taskmanagerapp.task.Epic;

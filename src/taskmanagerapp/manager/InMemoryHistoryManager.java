@@ -1,24 +1,21 @@
 package taskmanagerapp.manager;
 
-import taskmanagerapp.interfaces.HistoryManager;
 import taskmanagerapp.task.Task;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+
+import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager{
 
-    private Deque<Task> history;
+    private final LinkedList<Task> history;
 
     public InMemoryHistoryManager() {
-        history = new ArrayDeque<>();
+        history = new LinkedList<>();
     }
 
     @Override
     public void add(Task task){
         if (task != null) {
-            if (history.size() == 10) {
+            if (history.size() >= 10) {
                 history.poll();
             }
             history.offer(task);

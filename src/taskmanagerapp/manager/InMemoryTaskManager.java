@@ -1,8 +1,6 @@
 package taskmanagerapp.manager;
 
 import taskmanagerapp.enums.Status;
-import taskmanagerapp.interfaces.HistoryManager;
-import taskmanagerapp.interfaces.TaskManager;
 import taskmanagerapp.task.*;
 import java.util.*;
 
