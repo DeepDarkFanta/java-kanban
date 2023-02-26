@@ -10,14 +10,6 @@ public class Task {
     private int id;
     private Status status;
 
-/*
-    public enum Status {
-        NEW,
-        IN_PROGRESS,
-        DONE
-    }
-*/
-
     public Task(String title, String description) {
         this.title = title;
         this.description = description;

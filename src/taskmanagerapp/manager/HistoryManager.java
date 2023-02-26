@@ -1,10 +1,18 @@
 package taskmanagerapp.manager;
 import taskmanagerapp.tasks.Task;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public interface HistoryManager {
-    void add(Task task);
 
     List<Task> getHistory();
+
+    void removeNode(InMemoryHistoryManager.Node node);
+
+    ArrayList<Task> getTasks();
+
+    void linkLast(Task task);
+
+    void isContainsForDelete(Task task);
 }
