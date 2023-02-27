@@ -3,13 +3,11 @@ package taskmanagerapp.manager;
 import taskmanagerapp.tasks.Task;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 
 public class InMemoryHistoryManager implements HistoryManager{
     private Node head;
     private Node tail;
-    private int size;
+
     private final HashMap<Integer, Node> nodeHashMap;
 
     public InMemoryHistoryManager() {
@@ -18,7 +16,7 @@ public class InMemoryHistoryManager implements HistoryManager{
         tail = null;
     }
 
-    class Node{
+    static class Node{
         private final Task data;
         private Node next;
         private Node prev;
@@ -30,7 +28,7 @@ public class InMemoryHistoryManager implements HistoryManager{
         }
     }
 
-    public void isContainsForDelete(Task task){
+    public void taskDeleteInHistory(Task task){
         int id = task.getId();
         if (nodeHashMap.containsKey(id)) {
             removeNode(nodeHashMap.get(id));
@@ -56,12 +54,17 @@ public class InMemoryHistoryManager implements HistoryManager{
             prevNode.next = nextNode;
         }
         nodeHashMap.remove(node.data.getId());
-        size--;
     }
 
     @Override
     public ArrayList<Task> getTasks() {
-        return null;
+        ArrayList<Task> tasks = new ArrayList<>();
+        Node temp = head;
+        while (temp != null) {
+            tasks.add(temp.data);
+            temp = temp.next;
+        }
+        return tasks;
     }
 
     @Override
@@ -79,27 +82,10 @@ public class InMemoryHistoryManager implements HistoryManager{
         } else {
             oldTail.next = newNode;
         }
-        size++;
-    }
-
-    public void print() {
-        Node tempNode = head;
-        while (tempNode != null) {
-            System.out.print(tempNode.data.getId() + " ");
-            tempNode = tempNode.next;
-        }
-        System.out.print(" size: " + size);
     }
 
     @Override
-    public List<Task> getHistory() {
-        ArrayList<Task> tasks = new ArrayList<>();
-        Node temp = head;
-        while (temp != null) {
-            tasks.add(temp.data);
-            temp = temp.next;
-        }
-        print();
-        return tasks;
+    public void getHistory() {
+        System.out.println(getTasks());
     }
 }
