@@ -61,6 +61,6 @@ public class Main {
         inMemoryTaskManager.deleteAllSubtasks(inMemoryTaskManager.getSubtasksList());
         inMemoryTaskManager.getHistory();
         inMemoryTaskManager.deleteAllEpics(inMemoryTaskManager.getEpicTasksList());
-        inMemoryTaskManager.getHistory();
+        System.out.println(inMemoryTaskManager.getHistory().);
     }
 }

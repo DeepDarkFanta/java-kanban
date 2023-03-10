@@ -85,7 +85,7 @@ public class InMemoryHistoryManager implements HistoryManager{
     }
 
     @Override
-    public void getHistory() {
-        System.out.println(getTasks());
+    public ArrayList<Task> getHistory() {
+        return getTasks();
     }
 }

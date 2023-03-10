@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public interface HistoryManager {
 
-    void getHistory();
+    ArrayList<Task> getHistory();
 
     void removeNode(InMemoryHistoryManager.Node node);
 
