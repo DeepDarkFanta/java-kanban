@@ -3,6 +3,7 @@ package taskmanagerapp.manager;
 import taskmanagerapp.tasks.Task;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class InMemoryHistoryManager implements HistoryManager{
     private Node head;
@@ -85,7 +86,7 @@ public class InMemoryHistoryManager implements HistoryManager{
     }
 
     @Override
-    public ArrayList<Task> getHistory() {
+    public List<Task> getHistory() {
         return getTasks();
     }
 }

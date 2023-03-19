@@ -1,12 +1,16 @@
+import taskmanagerapp.enums.Status;
+import taskmanagerapp.manager.FileBackedTAsksManager;
 import taskmanagerapp.manager.TaskManager;
 import taskmanagerapp.manager.Managers;
 import taskmanagerapp.tasks.Epic;
 import taskmanagerapp.tasks.Subtask;
 import taskmanagerapp.tasks.Task;
 
+import java.io.FileNotFoundException;
+
 public class Main {
     public static void main(String[] args) {
-        TaskManager inMemoryTaskManager = Managers.getDefault();
+/*        TaskManager inMemoryTaskManager = Managers.getDefault();
         Task task1 = new Task("убрать комнату", "Нужно убраться до 16:00");
         Task task2 = new Task("убрать комнату", "Нужно убраться до 16:00");
         Epic epic1 = new Epic("Надо сделать утром", "Лучше управиться до 13:00");
@@ -16,7 +20,7 @@ public class Main {
         Epic epic2 = new Epic("Надо сделать утром", "Лучше управиться до 13:00");
         Task task3 = new Task("убрать комнату", "Нужно убраться до 16:00");
 
-        //Добавление задач
+      //Добавление задач
         inMemoryTaskManager.setTask(task1);
         inMemoryTaskManager.setTask(task2);
         inMemoryTaskManager.setTask(epic1);
@@ -46,13 +50,17 @@ public class Main {
         inMemoryTaskManager.getByIdTask(1);
         inMemoryTaskManager.getHistory();
 
+        inMemoryTaskManager.test(task1);
+        inMemoryTaskManager.test(subtask2);
+        inMemoryTaskManager.test(epic1);
         //удаление задач + проверка истории на удаление задач
-        inMemoryTaskManager.deleteTask(7);
         inMemoryTaskManager.getHistory();
-        inMemoryTaskManager.deleteSubtask(4);
+        inMemoryTaskManager.updateTask(task1, Status.DONE);
+        inMemoryTaskManager.test(task1);
+        inMemoryTaskManager.deleteSubtask(3);
         //inMemoryTaskManager.deleteEpic(2);
         inMemoryTaskManager.getHistory();
-        inMemoryTaskManager.deleteEpic(6);
+        inMemoryTaskManager.deleteEpic(4);
         inMemoryTaskManager.getHistory();
         inMemoryTaskManager.deleteAllTasks(inMemoryTaskManager.getTasksList());
         System.out.println("-----");
@@ -61,6 +69,6 @@ public class Main {
         inMemoryTaskManager.deleteAllSubtasks(inMemoryTaskManager.getSubtasksList());
         inMemoryTaskManager.getHistory();
         inMemoryTaskManager.deleteAllEpics(inMemoryTaskManager.getEpicTasksList());
-        System.out.println(inMemoryTaskManager.getHistory().);
+        System.out.println(inMemoryTaskManager.getHistory());*/
     }
 }

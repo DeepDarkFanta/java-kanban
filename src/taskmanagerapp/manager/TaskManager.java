@@ -5,6 +5,7 @@ import taskmanagerapp.tasks.Epic;
 import taskmanagerapp.tasks.Subtask;
 import taskmanagerapp.tasks.Task;
 import java.util.ArrayList;
+import java.util.List;
 
 public interface TaskManager {
     ArrayList<Epic> getEpicTasksList();
@@ -43,7 +44,9 @@ public interface TaskManager {
 
     void updateSubtask(Subtask subtask, Status status);
 
-    void setTask(Object task);
+    void setTask(Task task);
 
-    void getHistory();
+    List<Task> getHistory();
+
+    void test(Task task);
 }

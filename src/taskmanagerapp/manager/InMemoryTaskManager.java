@@ -1,19 +1,21 @@
 package taskmanagerapp.manager;
 
 import taskmanagerapp.enums.Status;
+import taskmanagerapp.manager.utils.TaskIdComparator;
 import taskmanagerapp.tasks.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class InMemoryTaskManager implements TaskManager {
 
     private static int id;
-    private final HashMap<Integer, Epic> epicTasksMap;
-    private final HashMap<Integer, Task> tasksMap;
-    private final HashMap<Integer, Subtask> subtasksMap;
-    private final ArrayList<Object> allTaskList;
-    private final HistoryManager inMemoryHistoryManager;
+    protected final HashMap<Integer, Epic> epicTasksMap;
+    protected final HashMap<Integer, Task> tasksMap;
+    protected final HashMap<Integer, Subtask> subtasksMap;
+    protected final ArrayList<Task> allTaskList;
+    protected final HistoryManager inMemoryHistoryManager;
 
     public InMemoryTaskManager() {
         epicTasksMap = new HashMap<>();
@@ -21,6 +23,10 @@ public class InMemoryTaskManager implements TaskManager {
         subtasksMap = new HashMap<>();
         allTaskList = new ArrayList<>();
         inMemoryHistoryManager = Managers.getDefaultHistory();
+    }
+
+    public void test(Task task) {
+        System.out.println(task.getClass().getSimpleName());
     }
 
     @Override
@@ -169,6 +175,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateTask(Task task, Status status) {
+        System.out.println(tasksMap.get(task.getId()) == task);
         allTaskList.remove(tasksMap.get(task.getId()));
         task.setStatus(status);
         setTask(task);
@@ -221,7 +228,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void setTask(Object task) {
+    public void setTask(Task task) {
         allTaskList.add(task);
         switch (task.getClass().getSimpleName()) {
             case "Task":
@@ -243,7 +250,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void getHistory(){
-         inMemoryHistoryManager.getHistory();
+    public List<Task> getHistory(){
+         return inMemoryHistoryManager.getHistory();
     }
 }
