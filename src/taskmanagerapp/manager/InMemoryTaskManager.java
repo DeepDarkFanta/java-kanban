@@ -1,7 +1,6 @@
 package taskmanagerapp.manager;
 
 import taskmanagerapp.enums.Status;
-import taskmanagerapp.manager.utils.TaskIdComparator;
 import taskmanagerapp.tasks.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public class InMemoryTaskManager implements TaskManager {
-
     private static int id;
     protected final HashMap<Integer, Epic> epicTasksMap;
     protected final HashMap<Integer, Task> tasksMap;
@@ -23,10 +21,6 @@ public class InMemoryTaskManager implements TaskManager {
         subtasksMap = new HashMap<>();
         allTaskList = new ArrayList<>();
         inMemoryHistoryManager = Managers.getDefaultHistory();
-    }
-
-    public void test(Task task) {
-        System.out.println(task.getClass().getSimpleName());
     }
 
     @Override
@@ -127,7 +121,6 @@ public class InMemoryTaskManager implements TaskManager {
         }
         epic.setIdOfSubtasksList(arrayList);
         updateEpic(epic, epic.getStatus());
-
     }
 
     @Override
@@ -175,7 +168,6 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateTask(Task task, Status status) {
-        System.out.println(tasksMap.get(task.getId()) == task);
         allTaskList.remove(tasksMap.get(task.getId()));
         task.setStatus(status);
         setTask(task);
@@ -232,8 +224,7 @@ public class InMemoryTaskManager implements TaskManager {
         allTaskList.add(task);
         switch (task.getClass().getSimpleName()) {
             case "Task":
-                Task newTask = (Task) task;
-                tasksMap.put(newTask.getId(), newTask);
+                tasksMap.put(task.getId(), task);
                 break;
             case "Epic":
                 Epic newEpic = (Epic) task;

@@ -7,8 +7,6 @@ import taskmanagerapp.tasks.Subtask;
 import taskmanagerapp.tasks.Task;
 
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskManager {
@@ -17,34 +15,8 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
     public FileBackedTAsksManager() {
         fileOfTasksAndHistory = new File("src/taskmanagerapp/resources/csv/tasksAndHistory.csv");
         if (fileOfTasksAndHistory.length() != 0) {
-            dataRecovery(loadFromFile(fileOfTasksAndHistory), historyFromString());
-        }
-    }
-
-    static List<Integer> historyFromString(String value) {
-
-    }
-
-    private void dataRecovery(Map<Integer, Task> tasksMap, List<Task> taskList) {
-        Status status;
-        for (Map.Entry<Integer, Task> integerTaskEntry : tasksMap.entrySet()) {
-            switch (integerTaskEntry.getValue().getClass().getSimpleName()) {
-                case "Task":
-                    status = integerTaskEntry.getValue().getStatus();
-                    super.setTask(integerTaskEntry.getValue());
-                    super.updateTask(integerTaskEntry.getValue(), status);
-                    break;
-                case "Epic":
-                    status = integerTaskEntry.getValue().getStatus();
-                    super.setTask((Epic) integerTaskEntry.getValue());
-                    super.updateEpic((Epic) integerTaskEntry.getValue(), status);
-                    break;
-                case "Subtask":
-                    status = integerTaskEntry.getValue().getStatus();
-                    super.setTask(integerTaskEntry.getValue());
-                    super.updateSubtask((Subtask) integerTaskEntry.getValue(),status);
-                    break;
-            }
+            Deque<String> strings = loadFromFile(fileOfTasksAndHistory);
+            dataRecovery(fromString(strings), Objects.requireNonNull(strings.pollLast()));
         }
     }
 
@@ -58,7 +30,7 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
         Epic epic2 = new Epic("Надо сделать утром", "Лучше управиться до 13:00");
         Task task3 = new Task("убрать комнату", "Нужно убраться до 16:00");
         FileBackedTAsksManager fileBackedTAsksManager = new FileBackedTAsksManager();
-        //Добавление задач
+
         fileBackedTAsksManager.setTask(task1);
         fileBackedTAsksManager.setTask(task2);
         fileBackedTAsksManager.setTask(epic1);
@@ -69,36 +41,107 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
         fileBackedTAsksManager.setTask(task3);
 
         fileBackedTAsksManager.getByIdTask(0);
-        fileBackedTAsksManager.getByIdTask(1);
         fileBackedTAsksManager.getByIdEpic(2);
         fileBackedTAsksManager.getByIdSubtask(3);
-        fileBackedTAsksManager.getByIdSubtask(4);
         fileBackedTAsksManager.getByIdSubtask(5);
+        fileBackedTAsksManager.getByIdSubtask(4);
         fileBackedTAsksManager.getByIdEpic(6);
-        fileBackedTAsksManager.getHistory();
+
+        //Проверка при удалении
+        /*ArrayList<Epic> arrayList = fileBackedTAsksManager.getEpicTasksList();
+        fileBackedTAsksManager.deleteAllEpics(arrayList);
+        fileBackedTAsksManager.getHistory();*/
+
         FileBackedTAsksManager fileBackedTAsksManager1 = new FileBackedTAsksManager();
-        System.out.println("22222");
     }
 
+    private Map<Integer, Task> fromString(Deque<String> strings){
+        Map<Integer, Task> tasksMap = new TreeMap<>();
+        while (!Objects.equals(strings.peek(), "")) {
+            String[] line = strings.pop().split(",");
+            switch (line[1]) {
+                case "Task":
+                    Task task = new Task(line[2], line[4]);
+                    task.setId(Integer.parseInt(line[0]));
+                    task.setStatus(Status.valueOf(line[3]));
+                    tasksMap.put(task.getId(), task);
+                    break;
+                case "Epic":
+                    Epic epic = new Epic(line[2], line[4]);
+                    epic.setId(Integer.parseInt(line[0]));
+                    epic.setStatus(Status.valueOf(line[3]));
+                    tasksMap.put(epic.getId(), epic);
+                    break;
+                case "Subtask":
+                    Subtask subtask = new Subtask(line[2], line[4], (Epic) tasksMap.get(Integer.parseInt(line[5])));
+                    subtask.setId(Integer.parseInt(line[0]));
+                    subtask.setStatus(Status.valueOf(line[3]));
+                    tasksMap.put(subtask.getId(), subtask);
+                    break;
+            }
+        }
+            return tasksMap;
+    }
+
+    private void dataRecovery(Map<Integer, Task> tasksMap, String history) {
+        Status status;
+        String[] lineHistory = history.split(",");
+        for (Map.Entry<Integer, Task> integerTaskEntry : tasksMap.entrySet()) {
+            switch (integerTaskEntry.getValue().getClass().getSimpleName()) {
+                case "Task":
+                    status = integerTaskEntry.getValue().getStatus();
+                    super.setTask(integerTaskEntry.getValue());
+                    super.updateTask(integerTaskEntry.getValue(), status);
+                    break;
+                case "Epic":
+                    status = integerTaskEntry.getValue().getStatus();
+                    super.setTask(integerTaskEntry.getValue());
+                    super.updateEpic((Epic) integerTaskEntry.getValue(), status);
+                    break;
+                case "Subtask":
+                    status = integerTaskEntry.getValue().getStatus();
+                    super.setTask(integerTaskEntry.getValue());
+                    super.updateSubtask((Subtask) integerTaskEntry.getValue(),status);
+                    break;
+            }
+        }
+        if (!lineHistory[0].equals("")) {
+            for (String s : lineHistory) {
+                Task task = tasksMap.get(Integer.parseInt(s));
+                int id = Integer.parseInt(s);
+                switch (task.getClass().getSimpleName()) {
+                    case "Task":
+                        getByIdTask(id);
+                        break;
+                    case "Epic":
+                        getByIdEpic(id);
+                        break;
+                    case "Subtask":
+                        getByIdSubtask(id);
+                        break;
+                }
+            }
+        }
+    }
 
     @Override
     public ArrayList<Epic> getEpicTasksList() {
-        return null;
+        return super.getEpicTasksList();
     }
 
     @Override
     public ArrayList<Task> getTasksList() {
-        return null;
+        return super.getTasksList();
     }
 
     @Override
     public ArrayList<Subtask> getSubtasksList() {
-        return null;
+        return super.getSubtasksList();
     }
 
     @Override
     public Task getByIdTask(int id) {
-        Task task = (Task) super.getByIdTask(id);
+        Task task = super.getByIdTask(id);
         save();
         return task;
     }
@@ -124,47 +167,56 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
 
     @Override
     public void deleteTask(int id) {
-
+        super.deleteTask(id);
+        save();
     }
 
     @Override
     public void deleteEpic(int id) {
-
+        super.deleteEpic(id);
+        save();
     }
 
     @Override
     public void deleteSubtask(int id) {
-
+        super.deleteSubtask(id);
+        save();
     }
 
     @Override
     public void deleteAllTasks(ArrayList<Task> taskList) {
-
+        super.deleteAllTasks(taskList);
+        save();
     }
 
     @Override
     public void deleteAllEpics(ArrayList<Epic> epicList) {
-
+        super.deleteAllEpics(epicList);
+        save();
     }
 
     @Override
     public void deleteAllSubtasks(ArrayList<Subtask> subtaskList) {
-
+        super.deleteAllSubtasks(subtaskList);
+        save();
     }
 
     @Override
     public void updateTask(Task task, Status status) {
-
+        super.updateTask(task, status);
+        save();
     }
 
     @Override
     public void updateEpic(Epic epic, Status status) {
-
+        super.updateEpic(epic, status);
+        save();
     }
 
     @Override
     public void updateSubtask(Subtask subtask, Status status) {
-
+        super.updateSubtask(subtask, status);
+        save();
     }
 
     @Override
@@ -193,43 +245,19 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
         }
     }
 
-    private static Map<Integer, Task> loadFromFile(File file)  {
-        Map<Integer, Task> tasksMap = new TreeMap<>();
+    private static Deque<String> loadFromFile(File file)  {
+        Deque<String> strings = new ArrayDeque<>();
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
             bufferedReader.readLine();
             while (bufferedReader.ready()) {
-                String[] line = bufferedReader.readLine().split(",");
-                if (line.length == 1) {
-                    String lineHistory = bufferedReader.readLine();
-                    break;
-                }
-                switch (line[1]) {
-                    case "Task":
-                        Task task = new Task(line[2], line[4]);
-                        task.setId(Integer.parseInt(line[0]));
-                        task.setStatus(Status.valueOf(line[3]));
-                        tasksMap.put(task.getId(), task);
-                        break;
-                    case "Epic":
-                        Epic epic = new Epic(line[2], line[4]);
-                        epic.setId(Integer.parseInt(line[0]));
-                        epic.setStatus(Status.valueOf(line[3]));
-                        tasksMap.put(epic.getId(), epic);
-                        break;
-                    case "Subtask":
-                        Subtask subtask = new Subtask(line[2], line[4], (Epic) tasksMap.get(Integer.parseInt(line[5])));
-                        subtask.setId(Integer.parseInt(line[0]));
-                        subtask.setStatus(Status.valueOf(line[3]));
-                        tasksMap.put(subtask.getId(), subtask);
-                        break;
-                    case "":
-                }
+                strings.addLast(bufferedReader.readLine());
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return tasksMap;
+        return strings;
     }
+
     private String toString(Task task) {
         StringBuilder sb = new StringBuilder();
         sb.append(task.getId())
@@ -251,8 +279,7 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
     private String toString(List<Task> historyTaskArray) {
         StringBuilder sb = new StringBuilder();
         if (historyTaskArray.size() == 0){
-            sb.append('\n')
-                    .append('0');
+            sb.append('\n');
         } else {
             for (Task task1 : historyTaskArray) {
                 sb.append(task1.getId()).append(',');
