@@ -124,6 +124,65 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
         }
     }
 
+    private void save() {
+        allTaskList.sort(new TaskIdComparator());
+        StringBuilder line = new StringBuilder("id,type,name,status,description,epic\n");
+        for (Task task : allTaskList) {
+            line.append(toString(task));
+        }
+        line.append('\n')
+                .append(toString(getHistory()));
+        try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter(fileOfTasksAndHistory))){
+            fileWriter.write(line.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Deque<String> loadFromFile(File file)  {
+        Deque<String> strings = new ArrayDeque<>();
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
+            bufferedReader.readLine();
+            while (bufferedReader.ready()) {
+                strings.addLast(bufferedReader.readLine());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return strings;
+    }
+
+    private String toString(Task task) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(task.getId())
+                .append(',')
+                .append(task.getClass().getSimpleName())
+                .append(',')
+                .append(task.getTitle())
+                .append(',')
+                .append(task.getStatus().toString())
+                .append(',')
+                .append(task.getDescription());
+        if (task.getClass().getSimpleName().equals("Subtask")) {
+            sb.append(',')
+                    .append(((Subtask) task).getIdOfEpic());
+        }
+        return sb.append("\n").toString();
+    }
+
+    private String toString(List<Task> historyTaskArray) {
+        StringBuilder sb = new StringBuilder();
+        if (historyTaskArray.size() == 0){
+            sb.append('\n');
+        } else {
+            for (Task task1 : historyTaskArray) {
+                sb.append(task1.getId()).append(',');
+            }
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        return sb.toString();
+    }
+
     @Override
     public ArrayList<Epic> getEpicTasksList() {
         return super.getEpicTasksList();
@@ -228,64 +287,5 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
     @Override
     public List<Task> getHistory() {
         return super.getHistory();
-    }
-
-    private void save() {
-        allTaskList.sort(new TaskIdComparator());
-        StringBuilder line = new StringBuilder("id,type,name,status,description,epic\n");
-        for (Task task : allTaskList) {
-            line.append(toString(task));
-        }
-        line.append('\n')
-                .append(toString(getHistory()));
-        try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter(fileOfTasksAndHistory))){
-            fileWriter.write(line.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static Deque<String> loadFromFile(File file)  {
-        Deque<String> strings = new ArrayDeque<>();
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
-            bufferedReader.readLine();
-            while (bufferedReader.ready()) {
-                strings.addLast(bufferedReader.readLine());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return strings;
-    }
-
-    private String toString(Task task) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(task.getId())
-                .append(',')
-                .append(task.getClass().getSimpleName())
-                .append(',')
-                .append(task.getTitle())
-                .append(',')
-                .append(task.getStatus().toString())
-                .append(',')
-                .append(task.getDescription());
-        if (task.getClass().getSimpleName().equals("Subtask")) {
-            sb.append(',')
-                    .append(((Subtask) task).getIdOfEpic());
-        }
-        return sb.append("\n").toString();
-    }
-
-    private String toString(List<Task> historyTaskArray) {
-        StringBuilder sb = new StringBuilder();
-        if (historyTaskArray.size() == 0){
-            sb.append('\n');
-        } else {
-            for (Task task1 : historyTaskArray) {
-                sb.append(task1.getId()).append(',');
-            }
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        return sb.toString();
     }
 }
