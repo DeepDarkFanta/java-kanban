@@ -2,6 +2,7 @@ package taskmanagerapp.manager;
 
 import taskmanagerapp.enums.Status;
 import taskmanagerapp.manager.utils.TaskIdComparator;
+import taskmanagerapp.manager.utils.exeptions.ManagerSaveException;
 import taskmanagerapp.tasks.Epic;
 import taskmanagerapp.tasks.Subtask;
 import taskmanagerapp.tasks.Task;
@@ -9,10 +10,11 @@ import taskmanagerapp.tasks.Task;
 import java.io.*;
 import java.util.*;
 
-public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskManager {
-    File fileOfTasksAndHistory;
+public class FileBackedTasksManager extends InMemoryTaskManager {
+    private final File fileOfTasksAndHistory;
+    private final String SEPARATOR = System.lineSeparator();
 
-    public FileBackedTAsksManager() {
+    public FileBackedTasksManager() {
         fileOfTasksAndHistory = new File("src/taskmanagerapp/resources/csv/tasksAndHistory.csv");
         if (fileOfTasksAndHistory.length() != 0) {
             Deque<String> strings = loadFromFile(fileOfTasksAndHistory);
@@ -29,7 +31,9 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
         Subtask subtask3 = new Subtask("Пылесосить", "Лучше управиться до 13:00", epic1);
         Epic epic2 = new Epic("Надо сделать утром", "Лучше управиться до 13:00");
         Task task3 = new Task("убрать комнату", "Нужно убраться до 16:00");
-        FileBackedTAsksManager fileBackedTAsksManager = new FileBackedTAsksManager();
+
+        //предварительно очищаем файл .csv чтобы не было двойной инициализации тасков
+        TaskManager fileBackedTAsksManager = Managers.getDefaultFileManager();
 
         fileBackedTAsksManager.setTask(task1);
         fileBackedTAsksManager.setTask(task2);
@@ -47,12 +51,16 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
         fileBackedTAsksManager.getByIdSubtask(4);
         fileBackedTAsksManager.getByIdEpic(6);
 
-        //Проверка при удалении
-        /*ArrayList<Epic> arrayList = fileBackedTAsksManager.getEpicTasksList();
-        fileBackedTAsksManager.deleteAllEpics(arrayList);
-        fileBackedTAsksManager.getHistory();*/
+        FileBackedTasksManager fileBackedTAsksManager1 = Managers.getDefaultFileManager();
 
-        FileBackedTAsksManager fileBackedTAsksManager1 = new FileBackedTAsksManager();
+        //Проверка первого менеджера со вторым на таски
+        ArrayList<Task> test = fileBackedTAsksManager.getAllTasks();
+        ArrayList<Task> test1 = fileBackedTAsksManager1.getAllTasks();
+        System.out.println("совпадение тасков: " + Arrays.deepEquals(test.toArray(), test1.toArray()));
+
+        //проверка историй
+        System.out.println("совпадение истории: " + Arrays.deepEquals(fileBackedTAsksManager.getHistory().toArray(),
+                fileBackedTAsksManager1.getHistory().toArray()));
     }
 
     private Map<Integer, Task> fromString(Deque<String> strings){
@@ -125,17 +133,18 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
     }
 
     private void save() {
+
         allTaskList.sort(new TaskIdComparator());
-        StringBuilder line = new StringBuilder("id,type,name,status,description,epic\n");
+        StringBuilder line = new StringBuilder("id,type,name,status,description,epic" + SEPARATOR);
         for (Task task : allTaskList) {
             line.append(toString(task));
         }
-        line.append('\n')
+        line.append(SEPARATOR)
                 .append(toString(getHistory()));
         try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter(fileOfTasksAndHistory))){
             fileWriter.write(line.toString());
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ManagerSaveException();
         }
     }
 
@@ -147,7 +156,7 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
                 strings.addLast(bufferedReader.readLine());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ManagerSaveException();
         }
         return strings;
     }
@@ -163,23 +172,25 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
                 .append(task.getStatus().toString())
                 .append(',')
                 .append(task.getDescription());
-        if (task.getClass().getSimpleName().equals("Subtask")) {
+        if (task instanceof Subtask) {
             sb.append(',')
                     .append(((Subtask) task).getIdOfEpic());
         }
-        return sb.append("\n").toString();
+        return sb.append(SEPARATOR).toString();
     }
 
     private String toString(List<Task> historyTaskArray) {
         StringBuilder sb = new StringBuilder();
-        if (historyTaskArray.size() == 0){
-            sb.append('\n');
-        } else {
+        if (!historyTaskArray.isEmpty()) {
+            // не очень понимаю как тут использовать String.join(), ибо у меня лист объектов...
+            // а в join надо передавать лист стрингов
             for (Task task1 : historyTaskArray) {
                 sb.append(task1.getId()).append(',');
             }
+            if (sb.length() != 0) {
+                sb.deleteCharAt(sb.length() - 1);
+            }
         }
-        sb.deleteCharAt(sb.length() - 1);
         return sb.toString();
     }
 
@@ -282,6 +293,11 @@ public class FileBackedTAsksManager extends InMemoryTaskManager implements TaskM
     public void setTask(Task task) {
         super.setTask(task);
         save();
+    }
+
+    @Override
+    public ArrayList<Task> getAllTasks() {
+        return allTaskList;
     }
 
     @Override
