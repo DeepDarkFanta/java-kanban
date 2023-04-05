@@ -17,16 +17,8 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
         return Managers.getDefaultFileManager(new File("test/resources/tasksAndHistoryTest.csv"));
     }
 
-    public void cleanFile(String path) {
-        try (FileWriter fileWriter = new FileWriter(path)){
-            fileWriter.write("");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Test
-    public void saveInFileWithEmptyHistoryAndNoSubtask() {
+    public void saveInFileWithEmptyHistoryAndNoSubtaskTest() {
         cleanFile("test/resources/saveAndLoadTest.csv");
         FileBackedTasksManager fileBackedTasksManager = new FileBackedTasksManager(
                 new File("test/resources/saveAndLoadTest.csv")
@@ -71,7 +63,7 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
     }
 
     @Test
-    public void loadFromFromFile() {
+    public void loadFromFileShouldDeserializedFromCSVinObjectTaskAndAddOnManagerTest() {
 
         cleanFile("test/resources/loadFromFileTest.csv");
         FileBackedTasksManager fileBackedTasksManager = new FileBackedTasksManager(
@@ -118,6 +110,14 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
             e.printStackTrace();
         }
         return content.toString();
+    }
+
+    public void cleanFile(String path) {
+        try (FileWriter fileWriter = new FileWriter(path)){
+            fileWriter.write("");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 
