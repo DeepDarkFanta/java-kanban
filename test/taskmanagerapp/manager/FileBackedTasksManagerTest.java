@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksManager> {
 
-    final String SEPARATOR = System.lineSeparator();
+    private final String SEPARATOR = System.lineSeparator();
 
     @Override
     FileBackedTasksManager createManager() {

@@ -82,10 +82,6 @@ public class InMemoryTaskManager implements TaskManager {
         return subtask;
     }
 
-    /*public int getIdTask() {
-        return id++;
-    }*/
-
     @Override
     public List<Subtask> getAllEpicSubtasks(int idEpic) {
         List<Subtask> subtasks = new ArrayList<>();
@@ -260,7 +256,7 @@ public class InMemoryTaskManager implements TaskManager {
 
             if (sortedDateTasksMap.containsKey(task.getStartTime())) {
                 return true;
-            }
+            } else if (task.getId() < 0) return false;
             sortedDateTasksMap.put(task.getStartTime(), task);
             List<Task> tasks = getPrioritizedTasks();
             int taskIdBetween = tasks.indexOf(task);
@@ -296,6 +292,12 @@ public class InMemoryTaskManager implements TaskManager {
         //проверка на пересечения по времени
         if ((task.getTaskType() == TaskType.TASK || task.getTaskType() == TaskType.SUBTASK ) && isTimeCrossing(task)) {
             throw new ManagerCreateTimeTaskException(task);
+        }
+
+        try {
+            if (Integer.parseInt(String.valueOf(task.getId())) < 0) throw new ManagerIdTaskException();
+        } catch (NumberFormatException e) {
+            throw new ManagerIdTaskException();
         }
         allTaskList.add(task);
         switch (task.getTaskType()) {

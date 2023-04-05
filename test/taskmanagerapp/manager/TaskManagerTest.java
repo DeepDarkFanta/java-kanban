@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Test;
 import taskmanagerapp.enums.Status;
 import taskmanagerapp.manager.utils.exeptions.ManagerCreateTimeTaskException;
 import taskmanagerapp.manager.utils.exeptions.ManagerIdTaskException;
-import taskmanagerapp.tasks.Epic;
-import taskmanagerapp.tasks.Subtask;
-import taskmanagerapp.tasks.Task;
+import taskmanagerapp.tasks.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -17,17 +15,16 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-
 abstract class TaskManagerTest<T extends TaskManager>{
 
     private T manager;
     abstract T createManager();
-    Task task;
-    Epic epic;
-    Subtask subtask1;
-    Epic epic1;
-    Subtask subtask2;
-    Subtask subtask;
+    private Task task;
+    private Epic epic;
+    private Subtask subtask1;
+    protected Epic epic1;
+    private Subtask subtask2;
+    protected Subtask subtask;
 
     @BeforeEach
     public void setDefaultBehavior() {
@@ -51,108 +48,103 @@ abstract class TaskManagerTest<T extends TaskManager>{
     }
 
     @Test
-    public void getEpicTasksList() {
+    public void getEpicTasksListShouldEpicsOnMapEqualInEpicsListTest() {
         List<Epic> epicsTestList = new ArrayList<>(manager.getEpicTasksMap().values());
         assertThat(epicsTestList).containsExactlyInAnyOrderElementsOf(manager.getEpicTasksList());
     }
 
     @Test
-    public void getEpicsTaskListWhenNoEpics() {
+    public void getEpicsTaskListWhenNoEpicsTest() {
         manager.deleteAllEpics(manager.getEpicTasksList());
         assertThat(Collections.EMPTY_LIST).isEqualTo(manager.getEpicTasksList());
     }
 
     @Test
-    public void getTasksList() {
+    public void getTasksListShouldTasksOnMapEqualInTasksListTest() {
       List<Task> taskTestList = new ArrayList<>(manager.getTasksMap().values());
       assertThat(taskTestList).containsExactlyInAnyOrderElementsOf(manager.getTasksList());
     }
 
     @Test
-    public void getTasksListWhenNoTasks() {
+    public void getTasksListWhenNoTasksTest() {
         manager.deleteAllTasks(manager.getTasksList());
         assertThat(Collections.EMPTY_LIST).isEqualTo(manager.getTasksList());
     }
 
     @Test
-    public void getSubtasksList() {
+    public void getSubtasksListShouldTasksOnSubtaskEqualInSubtasksListTest() {
         List<Subtask> subtaskTestList = new ArrayList<>(manager.getSubtasksMap().values());
         assertThat(subtaskTestList).containsExactlyInAnyOrderElementsOf(manager.getSubtasksList());
     }
 
     @Test
-    public void getSubtasksListWhenNoTasks() {
+    public void getSubtasksListWhenNoTasksTest() {
         manager.deleteAllTasks(manager.getTasksList());
         assertThat(Collections.EMPTY_LIST).isEqualTo(manager.getTasksList());
     }
 
     @Test
-    public void getByIdTask() {
+    public void getByIdTaskTest() {
         int taskIdTest = task.getId();
         assertThat(task).isEqualTo(manager.getByIdTask(taskIdTest));
     }
 
     @Test
-    public void getByIdTaskWhenNoneExistentId() {
+    public void getByIdTaskWhenNoneExistentIdTest() {
         int idTest = -1;
         assertThatThrownBy(() -> manager.getByIdTask(idTest))
                 .isInstanceOf(ManagerIdTaskException.class);
     }
 
     @Test
-    public void getByIdEpic() {
+    public void getByIdEpicTest() {
        int epicIdTest = epic.getId();
-        assertEquals(epic, manager.getByIdEpic(epicIdTest));
+       assertThat(epic).isEqualTo(manager.getByIdEpic(epicIdTest));
     }
 
     @Test
     public void getByIdEpicWhenNoneExistentId() {
         int idTest = -1;
-        assertThrows(
-                ManagerIdTaskException.class,
-                () -> manager.getByIdEpic(idTest));
+        assertThatThrownBy(() -> manager.getByIdEpic(idTest))
+                .isInstanceOf(ManagerIdTaskException.class);
     }
 
     @Test
-    public void getByIdSubtask() {
+    public void getByIdSubtaskTest() {
        int idSubtaskTest = subtask1.getId();
-       assertEquals(subtask1, manager.getByIdSubtask(idSubtaskTest));
+       assertThat(subtask1).isEqualTo(manager.getByIdSubtask(idSubtaskTest));
     }
 
     @Test
-    public void getByIdSubtaskWhenNoneExistentId() {
+    public void getByIdSubtaskWhenNoneExistentIdTest() {
         int idTest = -1;
-        assertThrows(
-                ManagerIdTaskException.class,
-                () -> manager.getByIdSubtask(idTest)
-        );
+        assertThatThrownBy(() -> manager.getByIdSubtask(idTest))
+                .isInstanceOf(ManagerIdTaskException.class);
     }
 
     @Test
-    public void getAllEpicSubtasks() {
+    public void getAllEpicSubtasksListTest() {
         int idEpicTest = epic.getId();
         List<Subtask> subtasksList = manager.getAllEpicSubtasks(idEpicTest);
-        assertArrayEquals(subtasksList.toArray(), manager.getAllEpicSubtasks(idEpicTest).toArray());
+        assertThat(subtasksList).containsAnyElementsOf(manager.getAllEpicSubtasks(idEpicTest));
     }
 
     @Test
-    public void getAllEpicsSubtasksWhenNoneExistentId() {
+    public void getAllEpicsSubtasksWhenNoneExistentIdTest() {
         int idEpicTest = -1;
-        assertThrows(
-                ManagerIdTaskException.class,
-                () -> manager.getAllEpicSubtasks(idEpicTest)
-        );
+        assertThatThrownBy(() -> manager.getAllEpicSubtasks(idEpicTest))
+                .isInstanceOf(ManagerIdTaskException.class);
     }
 
     @Test
-    public void deleteTask() {
+    public void deleteTaskTest() {
         int idTaskTest = task.getId();
         manager.deleteTask(idTaskTest);
-        assertFalse(manager.getTasksMap().containsValue(task));
+        assertThat(manager.getTasksMap().containsValue(task)).isFalse();
     }
 
     @Test
-    public void deleteTaskWhenNoneExistentId() {
+    public void deleteTaskWhenNoneExistentIdTest() {
         int idTaskTest = -1;
         assertThrows(
                 ManagerIdTaskException.class,
@@ -161,14 +153,30 @@ abstract class TaskManagerTest<T extends TaskManager>{
     }
 
     @Test
-    public void deleteEpic() {
+    public void deleteEpicTest() {
         int idEpicTest = epic.getId();
         manager.deleteEpic(idEpicTest);
         assertFalse(manager.getEpicTasksMap().containsValue(epic));
     }
 
     @Test
-    public void deleteEpicTestWhenExistentId() {
+    public void deleteEpicShouldThrowExceptionWhenIdIsNotCorrect() {
+        Epic epicTest = new Epic("", "");
+        int incorrectId = 320000000;
+        epicTest.setId(incorrectId);
+        manager.setTask(epic);
+
+    }
+
+    /*
+    Ответ:
+    В теории невозможно, что айдишник будет не верен у САМОЙ таски, ибо прежде чем ее обновлять или
+    что - то с ней делать надо ее добвить в менеджер через setTask(), там проверка на неверный id у
+    самой таски присутствует, сам тест - setTaskShouldThrowExceptionWhenIdIsNotCorrectTest();
+     */
+
+    @Test
+    public void deleteEpicTestWhenExistentIdTest() {
         int idEpicTest = -1;
         assertThrows(
                 ManagerIdTaskException.class,
@@ -177,7 +185,7 @@ abstract class TaskManagerTest<T extends TaskManager>{
     }
 
     @Test
-    public void deleteSubtask() {
+    public void deleteSubtaskTest() {
         int subtaskIdTest = subtask1.getId();
         manager.deleteSubtask(subtaskIdTest);
         assertFalse(manager.getSubtasksMap().containsValue(subtask1));
@@ -193,35 +201,40 @@ abstract class TaskManagerTest<T extends TaskManager>{
     }
 
     @Test
-    public void deleteAllTasks() {
+    public void deleteAllTasksInManagerFromMapTest() {
         assertFalse(manager.getTasksList().isEmpty());
         manager.deleteAllTasks(manager.getTasksList());
         assertTrue(manager.getTasksList().isEmpty());
     }
 
     @Test
-    public void deleteAllEpics() {
+    public void deleteAllEpicsInManagerFromMapTest() {
         assertFalse(manager.getEpicTasksMap().isEmpty());
         manager.deleteAllEpics(manager.getEpicTasksList());
         assertTrue(manager.getEpicTasksMap().isEmpty());
     }
 
     @Test
-    public void deleteAllSubtasks() {
+    public void deleteAllSubtasksInManagerFromMapTest() {
         assertFalse(manager.getSubtasksMap().isEmpty());
         manager.deleteAllSubtasks(manager.getSubtasksList());
         assertTrue(manager.getSubtasksMap().isEmpty());
     }
 
     @Test
-    public void updateTask() {
-        assertFalse(manager.getSubtasksMap().isEmpty());
-        manager.deleteAllTasks(manager.getTasksList());
-        assertTrue(manager.getTasksMap().isEmpty());
+    public void updateTaskStatusTest() {
+        manager.updateTask(task, Status.IN_PROGRESS);
+        assertThat(task.getStatus()).isEqualTo(Status.IN_PROGRESS);
+
+        manager.updateTask(task, Status.DONE);
+        assertThat(task.getStatus()).isEqualTo(Status.DONE);
+
+        manager.updateTask(task, Status.NEW);
+        assertThat(task.getStatus()).isEqualTo(Status.NEW);
     }
 
     @Test
-    public void updateEpic() {
+    public void updateEpicStatusTest() {
         //assertj
         manager.updateEpic(epic, Status.DONE);
         assertEquals(Status.DONE, epic.getStatus());
@@ -236,7 +249,7 @@ abstract class TaskManagerTest<T extends TaskManager>{
     }
 
     @Test
-    public void updateSubtask() {
+    public void updateSubtaskStatusTest() {
         // sub1 - new -> done
         // sub2 - new
         // epic - new ? in_progress
@@ -260,28 +273,45 @@ abstract class TaskManagerTest<T extends TaskManager>{
     }
 
     @Test
-    public void setTask() {
+    public void setTaskShouldAddTasksOnManagerTest() {
         Task taskTest = manager.getByIdTask(task.getId());
-        assertTrue(manager.getTasksMap().containsValue(taskTest));
+        assertThat(manager.getTasksMap().containsValue(taskTest)).isTrue();
 
         Epic epicTest = manager.getByIdEpic(epic.getId());
-        assertTrue(manager.getEpicTasksMap().containsValue(epicTest));
+        assertThat(manager.getEpicTasksMap().containsValue(epicTest)).isTrue();
 
         Subtask subtaskTest = manager.getByIdSubtask((subtask1.getId()));
-        assertTrue(manager.getSubtasksMap().containsValue(subtaskTest));
+        assertThat(manager.getSubtasksMap().containsValue(subtaskTest)).isTrue();
     }
 
     @Test
-    public void getHistory() {
+    public void setTaskShouldThrowExceptionWhenIdIsNotCorrectTest() {
+        Task task = new Task("", "", 123, "12.02.1999 12:12:12");
+        task.setId(-12);
+        assertThatThrownBy(() -> manager.setTask(task))
+                .isInstanceOf(ManagerIdTaskException.class);
+
+        Epic epic = new Epic("", "");
+        epic.setId(-10);
+        assertThatThrownBy(() -> manager.setTask(epic))
+                .isInstanceOf(ManagerIdTaskException.class);
+
+        Subtask subtask = new Subtask("", "", epic, 123, "12.02.1999 12:12:12");
+        subtask.setId(-9);
+        assertThatThrownBy(() -> manager.setTask(subtask))
+                .isInstanceOf(ManagerIdTaskException.class);
+    }
+
+    @Test
+    public void getHistoryListOfTasksTest() {
         manager.getByIdEpic(epic.getId());
         manager.getByIdTask(task.getId());
         manager.getByIdSubtask(subtask2.getId());
-        assertArrayEquals(List.of(epic, task, subtask2).toArray(),
-                manager.getHistory().toArray());
+        assertThat(List.of(epic, task, subtask2)).isEqualTo(manager.getHistory());
     }
 
     @Test
-    public void getAllTasks() {
+    public void getAllTasksShouldGetAllEpicsTasksAndSubtaskInListTest() {
         List<Task> tasksListTest = Stream.of(manager.getTasksList(), manager.getEpicTasksList(), manager.getSubtasksList())
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
@@ -290,7 +320,7 @@ abstract class TaskManagerTest<T extends TaskManager>{
     }
 
     @Test
-    public void timeTaskThrowCreateTimeException() {
+    public void timeTaskThrowCreateTimeExceptionTest() {
         Task taskTest1 = new Task("", "", 213,"12.02.2023 18:00:00");
         assertThrows(
                 ManagerCreateTimeTaskException.class,
@@ -318,7 +348,7 @@ abstract class TaskManagerTest<T extends TaskManager>{
     }
 
     @Test
-    public void timeTaskEpicDurationAndStartTime() {
+    public void timeTaskEpicDurationAndStartTimeTest() {
         Epic newEpic = new Epic("", "");
         manager.setTask(newEpic);
 
@@ -337,11 +367,84 @@ abstract class TaskManagerTest<T extends TaskManager>{
         assertEquals(subtask.getStartTime().plusMinutes(60), subtask.getEndTime());
     }
 
+    /*
+    Ваш комментарий:
+    Тут выполняется сортировка задач по времени окончания, но не проверяется, что задачи действительно
+    отсортированы в порядке возрастания времени окончания. Для этого можно добавить код для проверки,
+    что время окончания каждой задачи меньше времени начала следующей задачи.
+
+    мой ответ:
+    Не очень понял, ибо у меня как раз и идет проверка левого элемента (его конец по времени) с
+    правым (его начало по времени) в листе. И если время первого элемент находится до времени второго, то логично
+    Что если для следующего элемента (третий) выполнить подобное условия как для первого и второго, то следует,
+    что мы можем утверждать "что задачи действительно отсортированы в порядке возрастания времени окончания.
+    но сделаю как просите)
+    */
+
+    /*
+    В самом начале решил использовать assertJ и местами есть)
+    но подумал, что а вдруг нельзя), переделовать не оч хотелось бы, поэтому
+    делал в рамках курса junit Assertions)
+     */
+
+    /*
+    ужас был конфликт коммитов и я сделал слияние запихнув в стеш изменение и забыл откатить.. То что наизменял
+    исчезло))(()();)()()(
+     */
+
     @Test
-    public void getPrioritizedTasks() {
+    public void getPrioritizedTasksShouldGetListWhenTasksSortedByTimeNotCrossing() {
         List<Task> tasksTimeList = manager.getPrioritizedTasks();
         for (int i = 0; i < tasksTimeList.size() - 1; i++) {
-            assertTrue(tasksTimeList.get(i).getEndTime().isBefore(tasksTimeList.get(i + 1).getStartTime()));
+            assertTrue(tasksTimeList.get(i).getEndTime()
+                    .isBefore(tasksTimeList.get(i + 1).getStartTime()));
         }
+
+        for (int i = 0; i < tasksTimeList.size() - 1; i++) {
+            for (int j = i + 1; j < tasksTimeList.size() - 1; j++) {
+                assertThat(tasksTimeList.get(i).getEndTime()
+                        .isBefore(tasksTimeList.get(j).getStartTime())).isTrue();
+            }
+        }
+    }
+
+    @Test
+    public void shouldReturnEmptySubtasksListInEpic() {
+        Epic epic1 = new Epic("","");
+        manager.setTask(epic1);
+        assertThat(epic1.getIdOfSubtasksList().isEmpty()).isTrue();
+        for (Subtask subtask : manager.getSubtasksList()) {
+            assertThat(epic1.getId()).isNotEqualTo(subtask.getIdOfEpic());
+        }
+    }
+
+    @Test
+    public void shouldStatusSetNewForSubtasksIfEpicStatusIsNew() {
+        assertThat(epic.getId()).isEqualTo(subtask1.getIdOfEpic());
+        //при epic = new -> subtask = new
+        assertThat(epic.getStatus())
+                .as("epic: "+ epic.getStatus() +  ", subtask: " + subtask1.getStatus())
+                .isEqualTo(Status.NEW);
+    }
+
+    @Test
+    public void shouldStatusEpicDoneWhenStatusSubtasksIsDone() {
+        manager.updateSubtask(subtask1, Status.DONE);
+        manager.updateSubtask(subtask2, Status.DONE);
+        assertThat(epic.getStatus()).isEqualTo(Status.DONE);
+    }
+
+    @Test
+    public void shouldStatusEpicInProgressWhenSubtasksNewAndDone() {
+        manager.updateSubtask(subtask1, Status.NEW);
+        manager.updateSubtask(subtask2, Status.DONE);
+        assertThat(epic.getStatus()).isEqualTo(Status.IN_PROGRESS);
+    }
+
+    @Test
+    public void shouldEpicStatusInProgressWhenSubtasksInProgress() {
+        manager.updateSubtask(subtask1, Status.IN_PROGRESS);
+        manager.updateSubtask(subtask2, Status.IN_PROGRESS);
+        assertThat(epic.getStatus()).isEqualTo(Status.IN_PROGRESS);
     }
 }

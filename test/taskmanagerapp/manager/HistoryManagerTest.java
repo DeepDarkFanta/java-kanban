@@ -11,10 +11,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HistoryManagerTest {
-    Epic epic;
-    Task task;
-    Subtask subtask;
-    HistoryManager inMemoryHistoryManager;
+    private Epic epic;
+    private Task task;
+    private Subtask subtask;
+    private HistoryManager inMemoryHistoryManager;
+
     @BeforeEach
     public void createHistoryAndTasks() {
         inMemoryHistoryManager = Managers.getDefaultHistory();
@@ -27,13 +28,13 @@ class HistoryManagerTest {
     }
 
     @Test
-    public void getHistory() {
+    public void getHistoryShouldGetListOfHistoryTaskTest() {
         assertArrayEquals(List.of(epic, task, subtask).toArray(),
                 inMemoryHistoryManager.getHistory().toArray());
     }
 
     @Test
-    public void getHistoryEmpty() {
+    public void getHistoryEmptyWhenHistoryIsEmptyTest() {
         inMemoryHistoryManager.taskDeleteInHistory(epic);
         inMemoryHistoryManager.taskDeleteInHistory(task);
         inMemoryHistoryManager.taskDeleteInHistory(subtask);
@@ -41,7 +42,7 @@ class HistoryManagerTest {
     }
 
     @Test
-    public void linkLastAndAddIdentical() {
+    public void linkLastAndAddIdenticalTasks() {
         assertArrayEquals(List.of(epic, task, subtask).toArray(),
                 inMemoryHistoryManager.getHistory().toArray());
 
@@ -55,20 +56,20 @@ class HistoryManagerTest {
     }
 
     @Test
-    public void taskDeleteInHistoryOnStart() {
+    public void taskDeleteInHistoryOnStartInHistoryTest() {
         inMemoryHistoryManager.taskDeleteInHistory(epic);
         assertArrayEquals(List.of(task, subtask).toArray(),
                 inMemoryHistoryManager.getHistory().toArray());
     }
 
     @Test
-    public void taskDeleteInHistoryInEnd() {
+    public void taskDeleteInHistoryInTheEndInHistoryTest() {
         inMemoryHistoryManager.taskDeleteInHistory(subtask);
         assertArrayEquals(Arrays.array(epic, task), inMemoryHistoryManager.getHistory().toArray());
     }
 
     @Test
-    public void taskDeleteInHistoryBetween() {
+    public void taskDeleteInHistoryBetweenInHistoryTest() {
         inMemoryHistoryManager.taskDeleteInHistory(task);
         assertArrayEquals(Arrays.array(epic, subtask), inMemoryHistoryManager.getHistory().toArray());
     }
