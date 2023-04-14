@@ -1,10 +1,12 @@
 package taskmanagerapp.manager;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import taskmanagerapp.enums.Status;
 import taskmanagerapp.manager.utils.exeptions.ManagerCreateTimeTaskException;
 import taskmanagerapp.manager.utils.exeptions.ManagerIdTaskException;
+import taskmanagerapp.server.KVServer;
 import taskmanagerapp.tasks.*;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,17 +20,30 @@ import static org.junit.jupiter.api.Assertions.*;
 abstract class TaskManagerTest<T extends TaskManager>{
 
     private T manager;
-    abstract T createManager();
     private Task task;
     private Epic epic;
     private Subtask subtask1;
     protected Epic epic1;
     private Subtask subtask2;
     protected Subtask subtask;
+    abstract T createManager();
+    protected KVServer kvServer;
+
+    @AfterEach
+    public void stopServer() {
+        kvServer.stop();
+    }
 
     @BeforeEach
-    public void setDefaultBehavior() {
+    public void setDefaultBehavior() throws IOException {
+        kvServer = new KVServer();
+        kvServer.start();
         try (FileWriter fileWriter = new FileWriter("test/resources/tasksAndHistoryTest.csv")){
+            fileWriter.write("");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try (FileWriter fileWriter = new FileWriter("src/main/resources/tasksAndHistory.csv")){
             fileWriter.write("");
         } catch (IOException e) {
             e.printStackTrace();
@@ -167,13 +182,6 @@ abstract class TaskManagerTest<T extends TaskManager>{
         manager.setTask(epic);
 
     }
-
-    /*
-    Ответ:
-    В теории невозможно, что айдишник будет не верен у САМОЙ таски, ибо прежде чем ее обновлять или
-    что - то с ней делать надо ее добвить в менеджер через setTask(), там проверка на неверный id у
-    самой таски присутствует, сам тест - setTaskShouldThrowExceptionWhenIdIsNotCorrectTest();
-     */
 
     @Test
     public void deleteEpicTestWhenExistentIdTest() {
@@ -366,31 +374,6 @@ abstract class TaskManagerTest<T extends TaskManager>{
 
         assertEquals(subtask.getStartTime().plusMinutes(60), subtask.getEndTime());
     }
-
-    /*
-    Ваш комментарий:
-    Тут выполняется сортировка задач по времени окончания, но не проверяется, что задачи действительно
-    отсортированы в порядке возрастания времени окончания. Для этого можно добавить код для проверки,
-    что время окончания каждой задачи меньше времени начала следующей задачи.
-
-    мой ответ:
-    Не очень понял, ибо у меня как раз и идет проверка левого элемента (его конец по времени) с
-    правым (его начало по времени) в листе. И если время первого элемент находится до времени второго, то логично
-    Что если для следующего элемента (третий) выполнить подобное условия как для первого и второго, то следует,
-    что мы можем утверждать "что задачи действительно отсортированы в порядке возрастания времени окончания.
-    но сделаю как просите)
-    */
-
-    /*
-    В самом начале решил использовать assertJ и местами есть)
-    но подумал, что а вдруг нельзя), переделовать не оч хотелось бы, поэтому
-    делал в рамках курса junit Assertions)
-     */
-
-    /*
-    ужас был конфликт коммитов и я сделал слияние запихнув в стеш изменение и забыл откатить.. То что наизменял
-    исчезло))(()();)()()(
-     */
 
     @Test
     public void getPrioritizedTasksShouldGetListWhenTasksSortedByTimeNotCrossing() {
