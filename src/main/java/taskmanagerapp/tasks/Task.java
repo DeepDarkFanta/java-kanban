@@ -2,6 +2,7 @@ package taskmanagerapp.tasks;
 
 import taskmanagerapp.enums.Status;
 import taskmanagerapp.enums.TaskType;
+import taskmanagerapp.manager.InMemoryTaskManager;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -29,9 +30,10 @@ public class Task {
     }
 
     public Task(String title, String description, int duration, String startTime) {
-        this.id = counter++;
+        this.id = InMemoryTaskManager.getId();
         this.duration = Duration.ofMinutes(duration);
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
+                .withZone(ZoneId.systemDefault());
         LocalDateTime localDateTime = LocalDateTime.parse(startTime, dateTimeFormatter);
         this.startTime = ZonedDateTime.of(localDateTime, ZoneId.of(ZoneId.systemDefault().getId()));
         this.title = title;

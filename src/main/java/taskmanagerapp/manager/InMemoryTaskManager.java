@@ -15,8 +15,14 @@ public class InMemoryTaskManager implements TaskManager {
     protected final ArrayList<Task> allTaskList;
     protected final HistoryManager inMemoryHistoryManager;
     protected final Map<ZonedDateTime, Task> sortedDateTasksMap;
+    protected static int id = 0;
+
+    public static int getId() {
+        return id++;
+    }
 
     public InMemoryTaskManager() {
+        id = 0;
         epicTasksMap = new HashMap<>();
         tasksMap = new HashMap<>();
         subtasksMap = new HashMap<>();
@@ -102,6 +108,7 @@ public class InMemoryTaskManager implements TaskManager {
         } else {
             Task task = tasksMap.get(id);
             inMemoryHistoryManager.taskDeleteInHistory(task);
+            sortedDateTasksMap.remove(task.getStartTime());
             allTaskList.remove(task);
             tasksMap.remove(id);
         }
@@ -232,7 +239,6 @@ public class InMemoryTaskManager implements TaskManager {
                     epicTasksMap.get(subtask.getIdOfEpic()).setStatus(Status.IN_PROGRESS);
                     return;
                 }
-
             }
             epicTasksMap.get(subtask.getIdOfEpic()).setStatus(status);
         }
@@ -253,12 +259,15 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     public boolean isTimeCrossing(Task task) {
-
             if (sortedDateTasksMap.containsKey(task.getStartTime())) {
                 return true;
             } else if (task.getId() < 0) return false;
             sortedDateTasksMap.put(task.getStartTime(), task);
             List<Task> tasks = getPrioritizedTasks();
+            if (tasks == null) {
+                sortedDateTasksMap.put(task.getStartTime(), task);
+                return false;
+            }
             int taskIdBetween = tasks.indexOf(task);
             int tasksSize = tasks.size() - 1;
 
@@ -287,6 +296,7 @@ public class InMemoryTaskManager implements TaskManager {
             }
         return false;
     }
+
     @Override
     public void setTask(Task task) {
         //проверка на пересечения по времени

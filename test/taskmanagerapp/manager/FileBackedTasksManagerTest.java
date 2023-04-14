@@ -14,14 +14,14 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
 
     @Override
     FileBackedTasksManager createManager() {
-        return Managers.getDefaultFileManager(new File("test/resources/tasksAndHistoryTest.csv"));
+        return Managers.getDefaultFileManager("test/resources/tasksAndHistoryTest.csv");
     }
 
     @Test
     public void saveInFileWithEmptyHistoryAndNoSubtaskTest() {
         cleanFile("test/resources/saveAndLoadTest.csv");
         FileBackedTasksManager fileBackedTasksManager = new FileBackedTasksManager(
-                new File("test/resources/saveAndLoadTest.csv")
+                "test/resources/saveAndLoadTest.csv"
         );
         Epic epic = new Epic("1", "3");
         Task task = new Task("1", "2", 120, "01.01.2023 10:10:10");
@@ -67,7 +67,7 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
 
         cleanFile("test/resources/loadFromFileTest.csv");
         FileBackedTasksManager fileBackedTasksManager = new FileBackedTasksManager(
-                new File("test/resources/loadFromFileTest.csv")
+                "test/resources/loadFromFileTest.csv"
         );
         Task task = new Task("1", "2", 120, "01.01.2023 10:10:10");
         Epic epic = new Epic("1", "3");
@@ -76,7 +76,7 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
         fileBackedTasksManager.setTask(task);
         fileBackedTasksManager.setTask(subtask);
         FileBackedTasksManager fileBackedTasksManager1 = new FileBackedTasksManager(
-                new File("test/resources/loadFromFileTest.csv")
+                "test/resources/loadFromFileTest.csv"
         );
 
         //task
@@ -120,4 +120,3 @@ public class FileBackedTasksManagerTest extends TaskManagerTest<FileBackedTasksM
         }
     }
 }
-

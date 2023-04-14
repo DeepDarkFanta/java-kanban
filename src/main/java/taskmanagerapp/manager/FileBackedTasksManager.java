@@ -15,15 +15,13 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
     private final File fileOfTasksAndHistory;
     private final String SEPARATOR = System.lineSeparator();
 
-    public FileBackedTasksManager(File file) {
-        fileOfTasksAndHistory = file;
+
+    public FileBackedTasksManager(String path) {
+        fileOfTasksAndHistory = new File(path);
         if (fileOfTasksAndHistory.length() != 0) {
             Deque<String> strings = loadFromFile(fileOfTasksAndHistory);
             dataRecovery(fromString(strings), Objects.requireNonNull(strings.pollLast()));
         }
-    }
-
-    public static void main(String[] args) {
     }
 
     private Map<Integer, Task> fromString(Deque<String> strings){
@@ -32,7 +30,6 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
             String[] line = strings.pop().split(",");
             switch (line[1]) {
                 case "TASK":
-
                     Task task = new Task(line[2], line[4], Integer.parseInt(line[5]), (line[6])); // !!!!!!!!!!
                     task.setId(Integer.parseInt(line[0]));
                     task.setStatus(Status.valueOf(line[3]));
@@ -98,7 +95,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
     }
 
     private void save() {
-        allTaskList.sort(Comparator.comparingInt(Task::getId));
+       allTaskList.sort(Comparator.comparingInt(Task::getId));
 
         StringBuilder line = new StringBuilder("id,type,name,status,description,duration,startTime,epic" + SEPARATOR);
         for (Task task : allTaskList) {
@@ -152,7 +149,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
 
     private String toString(List<Task> historyTaskArray) {
         StringBuilder sb = new StringBuilder();
-        if (!historyTaskArray.isEmpty()) {
+        if (historyTaskArray != null) {
             sb.append(historyTaskArray.stream()
                     .map(x -> String.valueOf(x.getId()))
                     .collect(Collectors.joining(",")));

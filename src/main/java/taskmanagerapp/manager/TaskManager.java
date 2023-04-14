@@ -47,11 +47,11 @@ public interface TaskManager {
 
     ArrayList<Task> getAllTasks();
 
-     HashMap<Integer, Epic> getEpicTasksMap();
+    HashMap<Integer, Epic> getEpicTasksMap();
 
-     HashMap<Integer, Task> getTasksMap();
+    HashMap<Integer, Task> getTasksMap();
 
-     HashMap<Integer, Subtask> getSubtasksMap();
+    HashMap<Integer, Subtask> getSubtasksMap();
 
-     List<Task> getPrioritizedTasks();
+    List<Task> getPrioritizedTasks();
 }

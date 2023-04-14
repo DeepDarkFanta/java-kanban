@@ -11,6 +11,7 @@ public class InMemoryTaskMangerTest extends TaskManagerTest<InMemoryTaskManager>
         return Managers.getDefault();
     }
 
+
     @Test
     public void createManagerShouldWithoutEmptyMapsAndListsOfTasksTest() {
         InMemoryTaskManager inMemoryTaskManager = createManager();
