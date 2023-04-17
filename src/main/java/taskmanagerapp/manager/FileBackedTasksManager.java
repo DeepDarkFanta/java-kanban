@@ -94,7 +94,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         }
     }
 
-    private void save() {
+    protected void save() {
        allTaskList.sort(Comparator.comparingInt(Task::getId));
 
         StringBuilder line = new StringBuilder("id,type,name,status,description,duration,startTime,epic" + SEPARATOR);

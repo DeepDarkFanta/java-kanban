@@ -9,12 +9,16 @@ import java.time.ZonedDateTime;
 
 public class Managers {
     private static final int PORT = 8079;
-    public static InMemoryTaskManager getDefault() {
-        return new InMemoryTaskManager();
+    public static HttpTaskManager getDefault() {
+        return new HttpTaskManager("src/main/resources/tasksAndHistory.csv","http://localhost:" + PORT + "/");
     }
 
     public static HistoryManager getDefaultHistory() {
         return new InMemoryHistoryManager();
+    }
+
+    public static InMemoryTaskManager getDefaultInMemoryTaskManager() {
+        return new InMemoryTaskManager();
     }
 
     public static  FileBackedTasksManager getDefaultFileManager(String path) {

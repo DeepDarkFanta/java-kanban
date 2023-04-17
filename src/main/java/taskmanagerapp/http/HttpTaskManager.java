@@ -6,11 +6,11 @@ import taskmanagerapp.enums.Status;
 import taskmanagerapp.enums.TaskType;
 import taskmanagerapp.manager.FileBackedTasksManager;
 import taskmanagerapp.manager.Managers;
+import taskmanagerapp.manager.utils.jsonclasses.JsonObjectClass;
 import taskmanagerapp.manager.utils.pojoclasses.TaskHelperPojoObject;
 import taskmanagerapp.tasks.Epic;
 import taskmanagerapp.tasks.Subtask;
 import taskmanagerapp.tasks.Task;
-
 import java.lang.reflect.Type;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -31,9 +31,11 @@ public class HttpTaskManager extends FileBackedTasksManager {
         if (response.isEmpty()) {
             return;
         }
-        String[] tasksAndHistory = response.split("#separetted#");
+        JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
+        JsonArray tasksJsonArray = jsonObject.getAsJsonArray("tasks");
+        JsonArray historyJsonArray = jsonObject.getAsJsonArray("tasksHistory");
         Type type = new TypeToken<ArrayList<TaskHelperPojoObject>>() {}.getType();
-        ArrayList<TaskHelperPojoObject> tasks = gson.fromJson(tasksAndHistory[0], type);
+        ArrayList<TaskHelperPojoObject> tasks = gson.fromJson(tasksJsonArray, type);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
         for (TaskHelperPojoObject task : tasks) {
             TaskType taskType = task.taskType;
@@ -71,13 +73,13 @@ public class HttpTaskManager extends FileBackedTasksManager {
                     break;
             }
         }
-        loadHistory(tasksAndHistory[1]);
+        loadHistory(historyJsonArray);
     }
 
-    private void loadHistory(String taskHistory) {
-        if (!taskHistory.isEmpty()) {
+    private void loadHistory(JsonArray historyJsonArray) {
+        if (!historyJsonArray.isEmpty()) {
             Type type = new TypeToken<ArrayList<TaskHelperPojoObject>>() {}.getType();
-            ArrayList<TaskHelperPojoObject> tasks = gson.fromJson(taskHistory, type);
+            ArrayList<TaskHelperPojoObject> tasks = gson.fromJson(historyJsonArray, type);
 
             for (TaskHelperPojoObject task : tasks) {
                 TaskType taskType = task.taskType;
@@ -97,28 +99,23 @@ public class HttpTaskManager extends FileBackedTasksManager {
         }
     }
 
+    @Override
     public void save() {
         ArrayList<Task> tasks = super.allTaskList;
-        tasks.sort(Comparator.comparingInt(Task::getId));
-        String gsonAllTasks = gson.toJson(tasks) + "#separetted#"; //enterprise решение
         List<Task> tasksHistory = getHistory();
-        gsonAllTasks = gsonAllTasks + gson.toJson(tasksHistory);
-        client.put(gsonAllTasks);
+        tasks.sort(Comparator.comparingInt(Task::getId));
+
+        JsonObjectClass jsonObjectClass = new JsonObjectClass();
+        jsonObjectClass.setTasks(tasks);
+        jsonObjectClass.setTasksHistory((ArrayList<Task>) tasksHistory);
+        String request = gson.toJson(jsonObjectClass);
+        client.put(request);
     }
 
-    public ArrayList<Epic> getEpicTasksList() {
-        return super.getEpicTasksList();
-    }
-
-    @Override
-    public ArrayList<Task> getTasksList() {
-        return super.getTasksList();
-    }
-
-    @Override
-    public ArrayList<Subtask> getSubtasksList() {
-        return super.getSubtasksList();
-    }
+    /*
+    лишние удалил. Как правильно понял то вызывая методы интерфейса TaskManager у HttpTaskManger -> которые лично в нем не находятся,
+    то вызывутся у его родителя у FileBackendManager. Ну и оставил методы изменения состояние Манеджера для сохранения на сервере
+     */
 
     @Override
     public Task getByIdTask(int id) {
@@ -139,11 +136,6 @@ public class HttpTaskManager extends FileBackedTasksManager {
         Subtask subtask = super.getByIdSubtask(id);
         save();
         return subtask;
-    }
-
-    @Override
-    public List<Subtask> getAllEpicSubtasks(int idEpic) {
-        return super.getAllEpicSubtasks(idEpic);
     }
 
     @Override
@@ -204,35 +196,5 @@ public class HttpTaskManager extends FileBackedTasksManager {
     public void setTask(Task task) {
         super.setTask(task);
         save();
-    }
-
-    @Override
-    public List<Task> getHistory() {
-        return super.getHistory();
-    }
-
-    @Override
-    public ArrayList<Task> getAllTasks() {
-        return super.getAllTasks();
-    }
-
-    @Override
-    public HashMap<Integer, Epic> getEpicTasksMap() {
-        return super.getEpicTasksMap();
-    }
-
-    @Override
-    public HashMap<Integer, Task> getTasksMap() {
-        return super.getTasksMap();
-    }
-
-    @Override
-    public HashMap<Integer, Subtask> getSubtasksMap() {
-        return super.getSubtasksMap();
-    }
-
-    @Override
-    public List<Task> getPrioritizedTasks() {
-        return super.getPrioritizedTasks();
     }
 }

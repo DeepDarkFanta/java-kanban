@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 public class HttpTaskServerTest {
     private HttpTaskServer httpTaskServer;
@@ -38,7 +39,11 @@ public class HttpTaskServerTest {
     private String requestMessageOfTask;
     private String requestMessageOfEpic;
     private String requestMessageOfSubtask;
-
+    private final String PRIORITIZED_URI = "http://localhost:8080/tasks/prioritized";
+    private static final String TASK_URI = "http://localhost:8080/tasks/task/";
+    private static final String EPICS_URI = "http://localhost:8080/tasks/epic/";
+    private static final String SUBTASKS_URI = "http://localhost:8080/tasks/subtask/";
+    private static  final String TASKS_URI = "http://localhost:8080/tasks/";
     @BeforeEach
     public void startServersAddTasks() throws IOException {
 
@@ -62,13 +67,13 @@ public class HttpTaskServerTest {
                 "        \"duration\": 120,\n" +
                 "        \"startTime\": \"20.12.2013 20:12:23\"\n" +
                 "        }";
-        sendPostMessage(httpClient, URI.create("http://localhost:8080/tasks/task/"), requestMessageOfTask);
+        sendPostMessage(httpClient, URI.create(TASK_URI), requestMessageOfTask);
 
         requestMessageOfEpic = "{\n" +
                 "        \"title\": \"is\",\n" +
                 "        \"description\": \"is\"\n" +
                 "}";
-        sendPostMessage(httpClient, URI.create("http://localhost:8080/tasks/epic/"), requestMessageOfEpic);
+        sendPostMessage(httpClient, URI.create(EPICS_URI), requestMessageOfEpic);
 
         requestMessageOfSubtask = "{\n" +
                 "        \"title\": \"up\",\n" +
@@ -77,7 +82,7 @@ public class HttpTaskServerTest {
                 "        \"startTime\": \"20.12.2014 20:12:23\",\n" +
                 "        \"idEpic\": 1\n" +
                 "}";
-        sendPostMessage(httpClient, URI.create("http://localhost:8080/tasks/subtask/"), requestMessageOfSubtask);
+        sendPostMessage(httpClient, URI.create(SUBTASKS_URI), requestMessageOfSubtask);
     }
 
     @AfterEach
@@ -88,20 +93,20 @@ public class HttpTaskServerTest {
 
     @Test
     public void getPrioritizedTasksFromServerTest() {
-        String response = sendGetWaitBody("http://localhost:8080/tasks/prioritized");
+        String response = sendGetWaitBody(PRIORITIZED_URI);
         Type type = new TypeToken<List<Task>>() {}.getType();
         List<Task> priorityTimeTasksFromServerList = gson.fromJson(response, type);
 
         List<Task> priorityTimeTaskFromManagerList = httpTaskServer.taskManager.getPrioritizedTasks();
 
-        assertThat(priorityTimeTaskFromManagerList.size() == priorityTimeTasksFromServerList.size()).isTrue();
+        assertThat(priorityTimeTaskFromManagerList.size()).isEqualTo(priorityTimeTasksFromServerList.size());
 
         for (int i = 0; i < priorityTimeTaskFromManagerList.size(); i++) {
             Task taskFromManager = priorityTimeTaskFromManagerList.get(i);
             Task taskFromServer = priorityTimeTasksFromServerList.get(i);
 
             assertThat(taskFromManager.getTaskType()).isEqualTo(taskFromServer.getTaskType());
-            assertThat(taskFromManager.getId() == taskFromServer.getId()).isTrue();
+            assertThat(taskFromManager.getId()).isEqualTo(taskFromServer.getId());
         }
     }
 
@@ -137,7 +142,7 @@ public class HttpTaskServerTest {
         jsonObject = jsonElement.getAsJsonObject();
 
         assertThat(jsonObject.get("title").getAsString()).isEqualTo(subtask.getTitle());
-        assertThat(jsonObject.get("idEpic").getAsInt() == subtask.getIdOfEpic()).isTrue();
+        assertThat(jsonObject.get("idEpic").getAsInt()).isEqualTo(subtask.getIdOfEpic());
         assertThat(jsonObject.get("description").getAsString()).isEqualTo(subtask.getDescription());
         assertThat(jsonObject.get("duration").getAsInt()).isEqualTo(subtask.getDuration().toMinutes());
         assertThat(jsonObject.get("startTime").getAsString()).isEqualTo(subtask.getStartTime().format(FORMATTER));
@@ -150,7 +155,7 @@ public class HttpTaskServerTest {
                 "        \"id\": 0\n" +
                 "        }";
         assertThat(httpTaskServer.taskManager.getTasksList().get(0).getStatus()).isEqualTo(Status.NEW);
-        sendPostMessage(httpClient, URI.create("http://localhost:8080/tasks/task/?update"), requestUpdateTask);
+        sendPostMessage(httpClient, URI.create(TASK_URI + "?update"), requestUpdateTask);
         assertThat(httpTaskServer.taskManager.getTasksList().get(0).getStatus()).isEqualTo(Status.IN_PROGRESS);
 
         String requestMessageEpic = "{\n" +
@@ -158,7 +163,7 @@ public class HttpTaskServerTest {
                 "        \"id\": 1\n" +
                 "        }";
         assertThat(httpTaskServer.taskManager.getEpicTasksList().get(0).getStatus()).isEqualTo(Status.NEW);
-        sendPostMessage(httpClient, URI.create("http://localhost:8080/tasks/epic/?update"), requestMessageEpic);
+        sendPostMessage(httpClient, URI.create(EPICS_URI + "?update"), requestMessageEpic);
         assertThat(httpTaskServer.taskManager.getEpicTasksList().get(0).getStatus()).isEqualTo(Status.IN_PROGRESS);
 
        String requestMessageSubtask = "{\n" +
@@ -166,58 +171,56 @@ public class HttpTaskServerTest {
                "        \"id\": 2\n" +
                "        }";
         assertThat(httpTaskServer.taskManager.getSubtasksList().get(0).getStatus()).isEqualTo(Status.NEW);
-        sendPostMessage(httpClient, URI.create("http://localhost:8080/tasks/subtask/?update"), requestMessageSubtask);
+        sendPostMessage(httpClient, URI.create(SUBTASKS_URI + "?update"), requestMessageSubtask);
         assertThat(httpTaskServer.taskManager.getSubtasksList().get(0).getStatus()).isEqualTo(Status.DONE);
        assertThat(httpTaskServer.taskManager.getEpicTasksList().get(0).getStatus()).isEqualTo(Status.DONE);
     }
 
     @Test
     public void deleteTaskEpicSubtaskTest() {
-        sendDeleteMessage("http://localhost:8080/tasks/task/?id=0");
-        assertThat(httpTaskServer.taskManager.getTasksList().isEmpty()).isTrue();
+        sendDeleteMessage(TASK_URI + "?id=0");
+        sendDeleteMessage(SUBTASKS_URI + "?id=2");
+        sendDeleteMessage(EPICS_URI + "?id=1");
+        sendDeleteMessage(TASK_URI);
+        sendDeleteMessage(SUBTASKS_URI);
+        sendDeleteMessage(EPICS_URI);
 
-        sendDeleteMessage("http://localhost:8080/tasks/subtask/?id=2");
-        assertThat(httpTaskServer.taskManager.getSubtasksList().isEmpty()).isTrue();
-
-        sendDeleteMessage("http://localhost:8080/tasks/epic/?id=1");
-        assertThat(httpTaskServer.taskManager.getEpicTasksList().isEmpty()).isTrue();
-    }
-
-    @Test
-    public void deleteAllTaskEpicSubtaskTest() {
-        sendDeleteMessage("http://localhost:8080/tasks/task/");
-        assertThat(httpTaskServer.taskManager.getTasksList().isEmpty()).isTrue();
-
-        sendDeleteMessage("http://localhost:8080/tasks/subtask/");
-        assertThat(httpTaskServer.taskManager.getSubtasksList().isEmpty()).isTrue();
-
-        sendDeleteMessage("http://localhost:8080/tasks/epic/");
-        assertThat(httpTaskServer.taskManager.getEpicTasksList().isEmpty()).isTrue();
+        assertAll(
+                () -> assertThat(httpTaskServer.taskManager.getTasksList().isEmpty()).isTrue(),
+                () -> assertThat(httpTaskServer.taskManager.getSubtasksList().isEmpty()).isTrue(),
+                () ->  assertThat(httpTaskServer.taskManager.getEpicTasksList().isEmpty()).isTrue(),
+                () -> assertThat(httpTaskServer.taskManager.getTasksList().isEmpty()).isTrue(),
+                () -> assertThat(httpTaskServer.taskManager.getSubtasksList().isEmpty()).isTrue(),
+                () -> assertThat(httpTaskServer.taskManager.getEpicTasksList().isEmpty()).isTrue()
+        );
     }
 
     @Test
     public void getTasksEpicSubtaskTest() {
-        String responseTask = sendGetWaitBody("http://localhost:8080/tasks/task/?id=0");
+        String responseTask = sendGetWaitBody(TASK_URI + "?id=0");
         Task task = gson.fromJson(responseTask, Task.class);
-        assertThat(httpTaskServer.taskManager.getByIdTask(0).equals(task)).isTrue();
 
-        String responseEpic = sendGetWaitBody("http://localhost:8080/tasks/epic/?id=1");
+        String responseEpic = sendGetWaitBody(EPICS_URI + "?id=1");
         Epic epic = gson.fromJson(responseEpic, Epic.class);
-        assertThat(httpTaskServer.taskManager.getByIdEpic(1).equals(epic)).isTrue();
 
-        String responseSubtask = sendGetWaitBody("http://localhost:8080/tasks/subtask/?id=2");
+        String responseSubtask = sendGetWaitBody(SUBTASKS_URI + "?id=2");
         Subtask subtask = gson.fromJson(responseSubtask, Subtask.class);
-        assertThat(httpTaskServer.taskManager.getByIdSubtask(2).equals(subtask)).isTrue();
 
-        String responseWithAllTask = sendGetWaitBody("http://localhost:8080/tasks/");
+        assertAll(
+                () -> assertThat(httpTaskServer.taskManager.getByIdTask(0)).isEqualTo(task),
+                () -> assertThat(httpTaskServer.taskManager.getByIdEpic(1)).isEqualTo(epic),
+                () -> assertThat(httpTaskServer.taskManager.getByIdSubtask(2)).isEqualTo(subtask)
+        );
+
+        String responseWithAllTask = sendGetWaitBody(TASKS_URI);
         Type type = new TypeToken<ArrayList<Task>>() {}.getType();
         ArrayList<Task> tasks = gson.fromJson(responseWithAllTask, type);
         tasks.sort(Comparator.comparingInt(Task::getId));
 
         ArrayList<Task> inManagerTasks = httpTaskServer.taskManager.getAllTasks();
         inManagerTasks.sort(Comparator.comparingInt(Task::getId));
+        assertThat(tasks.size()).isEqualTo(inManagerTasks.size());
 
-        assertThat(tasks.size() == inManagerTasks.size()).isTrue();
         for (int i = 0; i < inManagerTasks.size(); i++) {
             Task tasksInMemory = inManagerTasks.get(i);
             Task tasksFromResponse = tasks.get(i);
@@ -225,21 +228,21 @@ public class HttpTaskServerTest {
             assertThat(tasksFromResponse.getTaskType()).isEqualTo(tasksInMemory.getTaskType());
             assertThat(tasksFromResponse.getId()).isEqualTo(tasksInMemory.getId());
         }
-    }
 
-    @Test
-    public void getEpicsTasksOrSubtasksTest() {
         String tasksListJson = gson.toJson(httpTaskServer.taskManager.getTasksList());
-        String tasksFromServer = sendGetWaitBody("http://localhost:8080/tasks/task/");
-        assertThat(tasksFromServer).isEqualTo(tasksListJson);
+        String tasksFromServer = sendGetWaitBody(TASK_URI);
 
         String epicsListJson = gson.toJson(httpTaskServer.taskManager.getEpicTasksList());
-        String epicsFromServer = sendGetWaitBody("http://localhost:8080/tasks/epic/");
-        assertThat(epicsFromServer).isEqualTo(epicsListJson);
+        String epicsFromServer = sendGetWaitBody(EPICS_URI);
 
         String subtasksListJson = gson.toJson(httpTaskServer.taskManager.getSubtasksList());
-        String subtasksFromServer = sendGetWaitBody("http://localhost:8080/tasks/subtask/");
-        assertThat(subtasksFromServer).isEqualTo(subtasksListJson);
+        String subtasksFromServer = sendGetWaitBody(SUBTASKS_URI);
+
+        assertAll(
+                () -> assertThat(tasksFromServer).isEqualTo(tasksListJson),
+                () -> assertThat(epicsFromServer).isEqualTo(epicsListJson),
+                () -> assertThat(subtasksFromServer).isEqualTo(subtasksListJson)
+        );
     }
 
     public String sendGetWaitBody(String uri) {
@@ -265,7 +268,7 @@ public class HttpTaskServerTest {
                 .build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            assertThat(response.statusCode() == 200).isTrue();
+            assertThat(response.statusCode()).isEqualTo(200);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -278,7 +281,7 @@ public class HttpTaskServerTest {
                 .build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            assertThat(response.statusCode() == 200).isTrue();
+            assertThat(response.statusCode()).isEqualTo(200);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }

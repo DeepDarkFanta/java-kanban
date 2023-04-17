@@ -5,5 +5,8 @@ public class ManagerIdTaskException extends RuntimeException{
         super("такого айдишника нет");
     }
 
+    public ManagerIdTaskException(String str) {
+        super(str);
+    }
 
 }

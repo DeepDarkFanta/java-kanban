@@ -1,5 +1,7 @@
 package taskmanagerapp.http;
 
+import taskmanagerapp.manager.utils.exeptions.ResponseStatusException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,17 +11,23 @@ import java.net.http.HttpResponse;
 public class KVTaskClient {
     private final String API_TOKEN;
     private final URI urlKVServer;
-    HttpClient httpClient;
+    private final HttpClient httpClient;
+    private final String SAVE_URI = "save/alltasks?API_TOKEN=";
+    private final String URI_LOAD = "load/alltasks?API_TOKEN=";
+
 
     public KVTaskClient(String path) {
+    if (path == null) throw new  NullPointerException();
     urlKVServer = URI.create(path);
     httpClient = HttpClient.newHttpClient();
     API_TOKEN = registrationOnKVServer();
+
     }
+
     public void put(String json) {
         HttpRequest request = HttpRequest.newBuilder()
                 .POST(HttpRequest.BodyPublishers.ofString(json))
-                .uri(URI.create(urlKVServer + "save/alltasks?API_TOKEN=" + API_TOKEN))
+                .uri(URI.create(urlKVServer + SAVE_URI + API_TOKEN))
                 .build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -32,7 +40,7 @@ public class KVTaskClient {
         String responseToManager = "";
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
-                .uri(URI.create(urlKVServer + "load/alltasks?API_TOKEN=" + API_TOKEN))
+                .uri(URI.create(urlKVServer + URI_LOAD + API_TOKEN))
                 .build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -44,19 +52,20 @@ public class KVTaskClient {
     }
 
     private String registrationOnKVServer() {
+        String result = "";
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
                 .uri(URI.create(urlKVServer + "register"))
                 .build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200) {
-                return response.body();
+            if (response.statusCode() != 200) {
+                throw new ResponseStatusException();
             }
-        } catch (IOException | InterruptedException e) {
+            result = response.body();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return result;
     }
-
 }

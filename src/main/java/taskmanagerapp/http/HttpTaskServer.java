@@ -6,18 +6,20 @@ import com.sun.net.httpserver.HttpServer;
 import taskmanagerapp.enums.Status;
 import taskmanagerapp.manager.Managers;
 import taskmanagerapp.manager.TaskManager;
+import taskmanagerapp.manager.utils.exeptions.ManagerIdTaskException;
 import taskmanagerapp.tasks.Epic;
 import taskmanagerapp.tasks.Subtask;
 import taskmanagerapp.tasks.Task;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.util.regex.Pattern;
 
+import static java.net.HttpURLConnection.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static jdk.internal.util.xml.XMLStreamWriter.DEFAULT_CHARSET;
-
 
 public class HttpTaskServer {
     protected final TaskManager taskManager;
@@ -27,7 +29,6 @@ public class HttpTaskServer {
 
     public HttpTaskServer() throws IOException {
         this.taskManager = Managers.getDefaultHttpTaskManager();
-
         this.httpServer = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
         this.httpServer.createContext("/tasks/", this::TasksHandler);
         this.httpServer.createContext("/tasks/task", this::TaskHandler);
@@ -35,14 +36,12 @@ public class HttpTaskServer {
         this.httpServer.createContext("/tasks/subtask", this::SubtaskHandler);
         this.httpServer.createContext("/tasks/history", this::HistoryHandler);
         this.httpServer.createContext("/tasks/prioritized", this::PrioritizedTasks);
-
         this.gson = Managers.getGsonFormattedZonedDateTime();
     }
 
     private void PrioritizedTasks(HttpExchange httpExchange) {
         try {
-            String method = httpExchange.getRequestMethod();
-            if (method.equals("GET")) {
+            if (getHttpMethod(httpExchange).equals("GET")) {
                 String response = gson.toJson(taskManager.getPrioritizedTasks());
                 sendText(httpExchange, response);
             }
@@ -55,8 +54,7 @@ public class HttpTaskServer {
 
     private void TasksHandler(HttpExchange httpExchange) {
         try {
-            String method = httpExchange.getRequestMethod();
-            if (method.equals("GET")) {
+            if (getHttpMethod(httpExchange).equals("GET")) {
                String response = gson.toJson(taskManager.getAllTasks());
                sendText(httpExchange, response);
             }
@@ -69,8 +67,7 @@ public class HttpTaskServer {
 
     private void HistoryHandler(HttpExchange httpExchange) {
         try {
-            String method = httpExchange.getRequestMethod();
-            if (method.equals("GET")) {
+            if (getHttpMethod(httpExchange).equals("GET")) {
                 String response = gson.toJson(taskManager.getHistory());
                 sendText(httpExchange, response);
             }
@@ -81,50 +78,34 @@ public class HttpTaskServer {
         }
     }
 
-    private void SubtaskHandler(HttpExchange httpExchange) {
+    private void SubtaskHandler(HttpExchange httpExchange) throws IOException {
         try {
             String path = httpExchange.getRequestURI().getPath();
             String query = httpExchange.getRequestURI().getQuery();
-            String method = httpExchange.getRequestMethod();
-            switch (method) {
+            String response = "";
+            switch (getHttpMethod(httpExchange)) {
                 case "GET":
                     if (query != null && Pattern.matches("^id=\\d+$", query)) {
-                        int id = fromStringToInt(
-                                query.replaceFirst("id=", "")
-                        );
-                        if (id != -1) {
-                            String response = gson.toJson(taskManager.getByIdSubtask(id));
-                            sendText(httpExchange, response);
-                        }
+                        int id = getIdFromUrl(query, httpExchange);
+                        response = gson.toJson(taskManager.getByIdSubtask(id));
                     } else if (Pattern.matches("^/tasks/subtask/$", path)) {
-                        String response = gson.toJson(taskManager.getSubtasksList());
-                        sendText(httpExchange, response);
-                    } else {
-                        httpExchange.sendResponseHeaders(404, 0);
+                        response = gson.toJson(taskManager.getSubtasksList());
                     }
+                    sendText(httpExchange, response);
                     break;
                 case "DELETE":
                     if (query != null && Pattern.matches("^id=\\d+$", query)) {
-                        int id = fromStringToInt(
-                            query.replaceFirst("id=", "")
-                        );
-                        if (id != -1) {
-                            taskManager.deleteSubtask(id);
-                            httpExchange.sendResponseHeaders(200, 0);
-                        } else {
-                            httpExchange.sendResponseHeaders(404, 0);
-                        }
+                        int id = getIdFromUrl(query, httpExchange);
+                        taskManager.deleteSubtask(id);
                     } else if (Pattern.matches("^/tasks/subtask/$", path) && query == null) {
                         taskManager.deleteAllSubtasks(taskManager.getSubtasksList());
-                        httpExchange.sendResponseHeaders(200, 0);
                     } else {
-                        httpExchange.sendResponseHeaders(404, 0);
+                        httpExchange.sendResponseHeaders(HTTP_NOT_FOUND, 0);
                     }
+                    httpExchange.sendResponseHeaders(HTTP_OK, 0);
                     break;
                 case "POST":
-                    InputStream inputStream = httpExchange.getRequestBody();
-                    String body = new String(inputStream.readAllBytes(), DEFAULT_CHARSET);
-                    JsonElement jsonElement = JsonParser.parseString(body);
+                    JsonElement jsonElement = JsonParser.parseString(getBodyFromRequest(httpExchange));
                     if (jsonElement.isJsonObject() && query == null) {
                         JsonObject jsonObject = jsonElement.getAsJsonObject();
                         Subtask subtask = new Subtask(
@@ -135,18 +116,20 @@ public class HttpTaskServer {
                                 jsonObject.get("startTime").getAsString()
                         );
                         taskManager.setTask(subtask);
-                        httpExchange.sendResponseHeaders(200, 0);
                     } else if (jsonElement.isJsonObject() && query.equals("update")) {
                         JsonObject jsonObject = jsonElement.getAsJsonObject();
                         taskManager.updateSubtask(
                                 taskManager.getSubtasksMap().get(jsonObject.get("id").getAsInt()),
                                 Status.valueOf(jsonObject.get("status").getAsString())
                         );
-                        httpExchange.sendResponseHeaders(200, 0);
                     }
+                    httpExchange.sendResponseHeaders(HTTP_OK, 0);
                     break;
+                default:
+                    httpExchange.sendResponseHeaders(HTTP_BAD_METHOD, 0);
             }
         } catch (Exception e) {
+            httpExchange.sendResponseHeaders(HTTP_BAD_REQUEST, 0);
             e.printStackTrace();
         } finally {
             httpExchange.close();
@@ -157,46 +140,31 @@ public class HttpTaskServer {
         try {
             String path = httpExchange.getRequestURI().getPath();
             String query = httpExchange.getRequestURI().getQuery();
-            String requestMethod = httpExchange.getRequestMethod();
-
-            switch (requestMethod) {
+            String response = "";
+            switch (getHttpMethod(httpExchange)) {
                 case "GET":
                     if (query != null && Pattern.matches("^id=\\d+$", query)) {
-                        String pathId = query.replaceFirst("id=", "");
-                        int id = fromStringToInt(pathId);
-                        if (id != -1) {
-                            Epic epic = taskManager.getByIdEpic(id);
-                            String response = gson.toJson(epic);
-                            sendText(httpExchange, response);
-                        }
+                        int id = getIdFromUrl(query, httpExchange);
+                        Epic epic = taskManager.getByIdEpic(id);
+                        response = gson.toJson(epic);
                     } else if (Pattern.matches("^/tasks/epic/$", path) && query == null) {
-                        String response = gson.toJson(taskManager.getEpicTasksList());
-                        sendText(httpExchange, response);
-                    } else {
-                        httpExchange.sendResponseHeaders(404, 0);
+                        response = gson.toJson(taskManager.getEpicTasksList());
                     }
+                    sendText(httpExchange, response);
                     break;
                 case "DELETE":
                     if (query != null && Pattern.matches("^id=\\d+$", query)) {
-                        String pathId = query.replaceFirst("id=", "");
-                        int id = fromStringToInt(pathId);
-                        if (id != -1) {
-                            taskManager.deleteEpic(id);
-                            httpExchange.sendResponseHeaders(200, 0);
-                        } else {
-                            httpExchange.sendResponseHeaders(404, 0);
-                        }
+                        int id = getIdFromUrl(query, httpExchange);
+                        taskManager.deleteEpic(id);
                     } else if (Pattern.matches("^/tasks/epic/$", path) && query == null) {
                         taskManager.deleteAllEpics(taskManager.getEpicTasksList());
-                        httpExchange.sendResponseHeaders(200, 0);
                     } else {
-                        httpExchange.sendResponseHeaders(404, 0);
+                        httpExchange.sendResponseHeaders(HTTP_NOT_FOUND, 0);
                     }
+                    httpExchange.sendResponseHeaders(HTTP_OK, 0);
                     break;
                 case "POST":
-                    InputStream inputStream = httpExchange.getRequestBody();
-                    String body = new String(inputStream.readAllBytes(), DEFAULT_CHARSET);
-                    JsonElement jsonElement = JsonParser.parseString(body);
+                    JsonElement jsonElement = JsonParser.parseString(getBodyFromRequest(httpExchange));
                     if (jsonElement.isJsonObject() && query == null) {
                         JsonObject jsonObject = jsonElement.getAsJsonObject();
                         Epic epic = new Epic(
@@ -204,21 +172,20 @@ public class HttpTaskServer {
                                 jsonObject.get("description").getAsString()
                         );
                         taskManager.setTask(epic);
-                        httpExchange.sendResponseHeaders(200, 0);
                     } else if (jsonElement.isJsonObject() && query.equals("update")) {
                         JsonObject jsonObject = jsonElement.getAsJsonObject();
                         taskManager.updateEpic(
                                 taskManager.getEpicTasksMap().get(jsonObject.get("id").getAsInt()),
                                 Status.valueOf(jsonObject.get("status").getAsString())
                         );
-                        httpExchange.sendResponseHeaders(200, 0);
                     }
+                    httpExchange.sendResponseHeaders(HTTP_OK, 0);
                     break;
                 default:
-                    httpExchange.sendResponseHeaders(404, 0);
+                    httpExchange.sendResponseHeaders(HTTP_NOT_FOUND, 0);
             }
         } catch (Exception e) {
-            httpExchange.sendResponseHeaders(404, 0);
+            httpExchange.sendResponseHeaders(HTTP_BAD_REQUEST, 0);
             e.printStackTrace();
         } finally {
             httpExchange.close();
@@ -228,46 +195,32 @@ public class HttpTaskServer {
     private void TaskHandler(HttpExchange httpExchange) throws IOException {
         try {
             String path = httpExchange.getRequestURI().getPath();
-            String requestMethod = httpExchange.getRequestMethod();
             String query = httpExchange.getRequestURI().getQuery();
-            switch (requestMethod) {
+            String response = "";
+            switch (getHttpMethod(httpExchange)) {
                 case "GET":
                     if (query != null && Pattern.matches("^id=\\d+$", query)) {
-                        String pathId = query.replaceFirst("id=", "");
-                        int id = fromStringToInt(pathId);
-                        if (id != -1) {
-                            Task task = taskManager.getByIdTask(id);
-                            String response = gson.toJson(task);
-                            sendText(httpExchange, response);
-                        }
+                        int id = getIdFromUrl(query, httpExchange);
+                        Task task = taskManager.getByIdTask(id);
+                        response = gson.toJson(task);
                     } else if (Pattern.matches("^/tasks/task/$", path) && query == null) {
-                        String response = gson.toJson(taskManager.getTasksList());
-                        sendText(httpExchange, response);
-                    } else {
-                        httpExchange.sendResponseHeaders(404, 0);
+                        response = gson.toJson(taskManager.getTasksList());
                     }
+                    sendText(httpExchange, response);
                     break;
                 case "DELETE":
                     if (query != null && Pattern.matches("^id=\\d+$", query)) {
-                        String pathId = query.replaceFirst("id=", "");
-                        int id = fromStringToInt(pathId);
-                        if (id != -1) {
-                            taskManager.deleteTask(id);
-                            httpExchange.sendResponseHeaders(200, 0);
-                        } else {
-                            httpExchange.sendResponseHeaders(404, 0);
-                        }
+                        int id = getIdFromUrl(query, httpExchange);
+                        taskManager.deleteTask(id);
                     } else if (Pattern.matches("^/tasks/task/$", path) && query == null) {
                         taskManager.deleteAllTasks(taskManager.getTasksList());
-                        httpExchange.sendResponseHeaders(200, 0);
                     } else {
-                        httpExchange.sendResponseHeaders(404, 0);
+                        httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, 0);
                     }
+                    httpExchange.sendResponseHeaders(HTTP_OK, 0);
                     break;
                 case "POST":
-                    InputStream inputStream = httpExchange.getRequestBody();
-                    String body = new String(inputStream.readAllBytes(), DEFAULT_CHARSET);
-                    JsonElement jsonElement = JsonParser.parseString(body);
+                    JsonElement jsonElement = JsonParser.parseString(getBodyFromRequest(httpExchange));
                     if (jsonElement.isJsonObject() && query == null) {
                         JsonObject jsonObject = jsonElement.getAsJsonObject();
                         Task task = new Task(
@@ -277,25 +230,29 @@ public class HttpTaskServer {
                                 jsonObject.get("startTime").getAsString()
                         );
                         taskManager.setTask(task);
-                        httpExchange.sendResponseHeaders(200, 0);
                     } else if (jsonElement.isJsonObject() && query.equals("update")) {
                         JsonObject jsonObject = jsonElement.getAsJsonObject();
                         taskManager.updateTask(
                                 taskManager.getTasksMap().get(jsonObject.get("id").getAsInt()),
                                 Status.valueOf(jsonObject.get("status").getAsString())
                         );
-                        httpExchange.sendResponseHeaders(200, 0);
                     }
+                    httpExchange.sendResponseHeaders(HTTP_OK, 0);
                     break;
                 default:
-                    httpExchange.sendResponseHeaders(404, 0);
+                    httpExchange.sendResponseHeaders(HTTP_BAD_METHOD, 0);
             }
         } catch (Exception e) {
-            httpExchange.sendResponseHeaders(404, 0);
+            httpExchange.sendResponseHeaders(HTTP_BAD_REQUEST, 0);
             e.printStackTrace();
         } finally {
             httpExchange.close();
         }
+    }
+
+    private String getBodyFromRequest(HttpExchange httpExchange) throws IOException {
+        InputStream inputStream = httpExchange.getRequestBody();
+        return new String(inputStream.readAllBytes(), DEFAULT_CHARSET);
     }
 
     private int fromStringToInt(String idPath) {
@@ -306,16 +263,34 @@ public class HttpTaskServer {
         }
     }
 
-    public void start() {
-        System.out.println("HttpTaskServer started on " + PORT + " port");
-        httpServer.start();
+    private String getHttpMethod(HttpExchange httpExchange) {
+        return httpExchange.getRequestMethod();
+    }
+
+    private int getIdFromUrl(String query, HttpExchange httpExchange) throws IOException {
+        String pathId = query.replaceFirst("id=", "");
+        int id = fromStringToInt(pathId);
+        if (id < 0) {
+            httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, 0);
+            throw new ManagerIdTaskException("negative id");
+        }
+        return id;
     }
 
     protected void sendText(HttpExchange h, String text) throws IOException {
+        if (text.isEmpty()) {
+            h.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, 0);
+            return;
+        }
         byte[] resp = text.getBytes(UTF_8);
         h.getResponseHeaders().add("Content-Type", "application/json");
-        h.sendResponseHeaders(200, resp.length);
+        h.sendResponseHeaders(HTTP_OK, resp.length);
         h.getResponseBody().write(resp);
+    }
+
+    public void start() {
+        System.out.println("HttpTaskServer started on " + PORT + " port");
+        httpServer.start();
     }
 
     public void stop() {
